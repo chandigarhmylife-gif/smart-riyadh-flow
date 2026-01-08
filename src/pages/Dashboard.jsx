@@ -6,11 +6,21 @@ import RecentScenarios from '../components/dashboard/RecentScenarios';
 import SystemStatus from '../components/dashboard/SystemStatus';
 import QuickActions from '../components/dashboard/QuickActions';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
+import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
+import PredictiveAnalytics from '../components/AI/PredictiveAnalytics';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState([]);
+  const [liveUpdatesActive, setLiveUpdatesActive] = useState(true);
+  
+  const currentMetrics = {
+    avgWaitTime: 42,
+    throughput: 156,
+    efficiency: 89,
+    queueLength: 8
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -89,12 +99,14 @@ export default function Dashboard() {
           {/* Left Column - 2 columns width */}
           <div className="lg:col-span-2 space-y-6">
             <RecentScenarios loading={loading} />
+            <LiveMetricsStream isActive={liveUpdatesActive} />
             <AlertsPanel alerts={alerts} onDismiss={handleDismissAlert} />
           </div>
 
           {/* Right Column - 1 column width */}
           <div className="space-y-6">
             <SystemStatus loading={loading} />
+            <PredictiveAnalytics currentMetrics={currentMetrics} />
           </div>
         </div>
       </div>

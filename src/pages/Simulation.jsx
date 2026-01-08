@@ -5,6 +5,10 @@ import ControlPanel from '../components/Simulation/ControlPanel';
 import MetricsSidebar from '../components/Simulation/MetricsSidebar';
 import SignalIndicator from '../components/Simulation/SignalIndicator';
 import AIDecisions from '../components/Simulation/AIDecisions';
+import TrafficAnalysis from '../components/AI/TrafficAnalysis';
+import SmartRecommendations from '../components/AI/SmartRecommendations';
+import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
+import LiveAlerts from '../components/RealTime/LiveAlerts';
 
 export default function Simulation() {
   const [isRunning, setIsRunning] = useState(false);
@@ -15,6 +19,13 @@ export default function Simulation() {
     south: 'green',
     east: 'red',
     west: 'red'
+  });
+  
+  const [metrics, setMetrics] = useState({
+    avgWaitTime: 42,
+    throughput: 156,
+    queueLength: 8,
+    efficiency: 89
   });
 
   const scenarios = [
@@ -88,8 +99,16 @@ export default function Simulation() {
 
           {/* Right Column - Metrics & AI */}
           <div className="lg:col-span-3 space-y-4">
-            <MetricsSidebar isRunning={isRunning} />
-            <AIDecisions />
+            <LiveMetricsStream isActive={isRunning} />
+            <LiveAlerts isActive={isRunning} />
+            <TrafficAnalysis 
+              trafficData={metrics}
+              onAnalysisComplete={(result) => console.log('Analysis:', result)}
+            />
+            <SmartRecommendations 
+              scenario={{ name: selectedScenario }}
+              metrics={metrics}
+            />
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileDown, Calendar, Search, Eye } from 'lucide-react';
 import ReportTemplate from '../components/Reports/ReportTemplate';
+import ReportGenerator from '../components/AI/ReportGenerator';
 
 export default function Reports() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -197,6 +198,17 @@ export default function Reports() {
                 )}
               </CardContent>
             </Card>
+
+            {/* AI Report Generator */}
+            <ReportGenerator 
+              scenarioData={{ name: 'Current Analysis' }}
+              metricsData={{ 
+                avgWaitTime: 42, 
+                throughput: 156, 
+                efficiency: 89, 
+                queueLength: 8 
+              }}
+            />
 
             {/* Historical Reports */}
             <Card className="border-2 border-slate-200">
