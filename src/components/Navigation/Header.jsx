@@ -68,6 +68,11 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                     API
                   </Button>
                 </Link>
+                <Link to={createPageUrl('ScenarioBuilder')}>
+                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Builder
+                  </Button>
+                </Link>
               </>
             ) : (
               <>
@@ -175,6 +180,21 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                 <Link to={createPageUrl('APIConnections')} className="block">
                   <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     API
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('IncidentManagement')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Incidents
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('DeviceManagement')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Devices
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('ScenarioBuilder')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Builder
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Settings')} className="block">

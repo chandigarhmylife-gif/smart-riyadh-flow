@@ -11,6 +11,9 @@ import TrafficData from './pages/TrafficData';
 import ScenarioHistory from './pages/ScenarioHistory';
 import RealTimeNetwork from './pages/RealTimeNetwork';
 import APIConnections from './pages/APIConnections';
+import IncidentManagement from './pages/IncidentManagement';
+import DeviceManagement from './pages/DeviceManagement';
+import ScenarioBuilder from './pages/ScenarioBuilder';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +31,9 @@ export const PAGES = {
     "ScenarioHistory": ScenarioHistory,
     "RealTimeNetwork": RealTimeNetwork,
     "APIConnections": APIConnections,
+    "IncidentManagement": IncidentManagement,
+    "DeviceManagement": DeviceManagement,
+    "ScenarioBuilder": ScenarioBuilder,
 }
 
 export const pagesConfig = {
