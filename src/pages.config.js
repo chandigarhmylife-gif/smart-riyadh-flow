@@ -8,6 +8,9 @@ import Scenarios from './pages/Scenarios';
 import Settings from './pages/Settings';
 import Simulation from './pages/Simulation';
 import TrafficData from './pages/TrafficData';
+import ScenarioHistory from './pages/ScenarioHistory';
+import RealTimeNetwork from './pages/RealTimeNetwork';
+import APIConnections from './pages/APIConnections';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +25,9 @@ export const PAGES = {
     "Settings": Settings,
     "Simulation": Simulation,
     "TrafficData": TrafficData,
+    "ScenarioHistory": ScenarioHistory,
+    "RealTimeNetwork": RealTimeNetwork,
+    "APIConnections": APIConnections,
 }
 
 export const pagesConfig = {
