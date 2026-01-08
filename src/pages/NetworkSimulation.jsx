@@ -1,23 +1,36 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Network, Play, Pause, RotateCcw } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Network, Play, Pause, RotateCcw, Map } from 'lucide-react';
 import IntersectionNetwork from '../components/Network/IntersectionNetwork';
 import VehicleTypes from '../components/Simulation/VehicleTypes';
 import WeatherImpact from '../components/Integration/WeatherImpact';
 import EmergencyPriority from '../components/Simulation/EmergencyPriority';
 import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
+import TrafficMap from '../components/Map/TrafficMap';
 
 export default function NetworkSimulation() {
   const [isRunning, setIsRunning] = useState(false);
   const [networkData, setNetworkData] = useState(null);
   const [vehicleDistribution, setVehicleDistribution] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [emergencyVehicles, setEmergencyVehicles] = useState([]);
+  const [incidents, setIncidents] = useState([]);
 
   const handlePlay = () => setIsRunning(true);
   const handlePause = () => setIsRunning(false);
   const handleReset = () => {
     setIsRunning(false);
-    console.log('Network simulation reset');
+    setEmergencyVehicles([]);
+    setIncidents([]);
+  };
+
+  const handleEmergencyTrigger = (emergency) => {
+    const position = [37.7749 + (Math.random() - 0.5) * 0.01, -122.4194 + (Math.random() - 0.5) * 0.01];
+    setEmergencyVehicles([...emergencyVehicles, { ...emergency, position }]);
+    setTimeout(() => {
+      setEmergencyVehicles(prev => prev.filter(e => e.id !== emergency.id));
+    }, emergency.eta * 1000);
   };
 
   return (
@@ -52,15 +65,36 @@ export default function NetworkSimulation() {
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-12 gap-4">
-          {/* Left Column - Network Map */}
+          {/* Left Column - Network Visualization */}
           <div className="lg:col-span-8">
-            <IntersectionNetwork onNetworkChange={setNetworkData} />
+            <Tabs defaultValue="network" className="h-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="network">Network Diagram</TabsTrigger>
+                <TabsTrigger value="map">Live Map View</TabsTrigger>
+              </TabsList>
+              <TabsContent value="network">
+                <IntersectionNetwork onNetworkChange={setNetworkData} />
+              </TabsContent>
+              <TabsContent value="map" className="h-[600px]">
+                <TrafficMap
+                  intersections={[
+                    { id: 1, name: 'Main & 1st', position: [37.7749, -122.4194], status: 'green' },
+                    { id: 2, name: 'Main & 2nd', position: [37.7759, -122.4204], status: 'red' },
+                    { id: 3, name: '1st & Oak', position: [37.7739, -122.4184], status: 'green' },
+                    { id: 4, name: '2nd & Oak', position: [37.7749, -122.4214], status: 'green' }
+                  ]}
+                  emergencyVehicles={emergencyVehicles}
+                  incidents={incidents}
+                  isRunning={isRunning}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Column - Controls & Metrics */}
           <div className="lg:col-span-4 space-y-4">
             <LiveMetricsStream isActive={isRunning} />
-            <EmergencyPriority onEmergencyTrigger={(e) => console.log('Emergency:', e)} />
+            <EmergencyPriority onEmergencyTrigger={handleEmergencyTrigger} />
           </div>
         </div>
 

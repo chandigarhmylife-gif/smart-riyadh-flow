@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TrafficCanvas from '../components/Simulation/TrafficCanvas';
 import ControlPanel from '../components/Simulation/ControlPanel';
 import MetricsSidebar from '../components/Simulation/MetricsSidebar';
@@ -9,6 +10,7 @@ import TrafficAnalysis from '../components/AI/TrafficAnalysis';
 import SmartRecommendations from '../components/AI/SmartRecommendations';
 import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
 import LiveAlerts from '../components/RealTime/LiveAlerts';
+import TrafficMap from '../components/Map/TrafficMap';
 
 export default function Simulation() {
   const [isRunning, setIsRunning] = useState(false);
@@ -89,12 +91,28 @@ export default function Simulation() {
 
           {/* Center Column - Visualization */}
           <div className="lg:col-span-6">
-            <div className="h-[500px] lg:h-[600px]">
-              <TrafficCanvas 
-                signalStates={signalStates}
-                isRunning={isRunning}
-              />
-            </div>
+            <Tabs defaultValue="3d" className="h-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="3d">3D Simulation</TabsTrigger>
+                <TabsTrigger value="map">Live Map</TabsTrigger>
+              </TabsList>
+              <TabsContent value="3d" className="h-[500px] lg:h-[600px]">
+                <TrafficCanvas 
+                  signalStates={signalStates}
+                  isRunning={isRunning}
+                />
+              </TabsContent>
+              <TabsContent value="map" className="h-[500px] lg:h-[600px]">
+                <TrafficMap
+                  intersections={[
+                    { id: 1, name: 'Main & 1st', position: [37.7749, -122.4194], status: signalStates.north },
+                    { id: 2, name: 'Main & 2nd', position: [37.7759, -122.4204], status: signalStates.south },
+                    { id: 3, name: '1st & Oak', position: [37.7739, -122.4184], status: signalStates.east }
+                  ]}
+                  isRunning={isRunning}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Column - Metrics & AI */}
