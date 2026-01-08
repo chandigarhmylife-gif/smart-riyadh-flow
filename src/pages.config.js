@@ -7,6 +7,7 @@ import Settings from './pages/Settings';
 import Scenarios from './pages/Scenarios';
 import TrafficData from './pages/TrafficData';
 import Reports from './pages/Reports';
+import NetworkSimulation from './pages/NetworkSimulation';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Scenarios": Scenarios,
     "TrafficData": TrafficData,
     "Reports": Reports,
+    "NetworkSimulation": NetworkSimulation,
 }
 
 export const pagesConfig = {

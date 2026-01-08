@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import DataSourceCard from '../components/TrafficData/DataSourceCard';
 import DataPreviewTable from '../components/TrafficData/DataPreviewTable';
 import DataImport from '../components/Scenarios/DataImport';
+import FileProcessor from '../components/TrafficData/FileProcessor';
 
 export default function TrafficData() {
   const [dataSources, setDataSources] = useState([
@@ -42,8 +43,22 @@ export default function TrafficData() {
     setDataSources(dataSources.filter(s => s.id !== source.id));
   };
 
+  const [fileToProcess, setFileToProcess] = useState(null);
+
   const handleImportComplete = (data) => {
     console.log('Data imported:', data);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileToProcess(file);
+    }
+  };
+
+  const handleProcessComplete = (cleanedData, quality) => {
+    console.log('Processed:', cleanedData, quality);
+    setFileToProcess(null);
   };
 
   return (
@@ -76,6 +91,39 @@ export default function TrafficData() {
             ))}
           </div>
         </div>
+
+        {/* Advanced File Processing */}
+        {fileToProcess ? (
+          <FileProcessor 
+            file={fileToProcess} 
+            onProcessComplete={handleProcessComplete}
+          />
+        ) : (
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+            <input
+              type="file"
+              accept=".csv,.json"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="advanced-upload"
+            />
+            <label htmlFor="advanced-upload" className="cursor-pointer">
+              <div className="space-y-3">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                  <Upload className="w-8 h-8 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    Advanced File Processing
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Upload CSV or JSON for validation and transformation
+                  </p>
+                </div>
+              </div>
+            </label>
+          </div>
+        )}
 
         {/* Import Section */}
         <DataImport onImportComplete={handleImportComplete} />
