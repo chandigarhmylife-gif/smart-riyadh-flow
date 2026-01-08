@@ -1,88 +1,102 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { Play, BarChart3, Upload, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Activity, Users, Zap, Clock } from 'lucide-react';
+import MetricCard from '../components/dashboard/MetricCard';
+import RecentScenarios from '../components/dashboard/RecentScenarios';
+import SystemStatus from '../components/dashboard/SystemStatus';
+import QuickActions from '../components/dashboard/QuickActions';
+import AlertsPanel from '../components/dashboard/AlertsPanel';
 
 export default function Dashboard() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDashboardData();
+  }, []);
+
+  const handleDismissAlert = (alertId) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+            Welcome back{user ? `, ${user.full_name || user.email.split('@')[0]}` : ''}
+          </h1>
           <p className="text-slate-600">Monitor and manage your traffic control simulations</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link to={createPageUrl('Simulation')}>
-            <Card className="border-2 border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Play className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-slate-900">Start</div>
-                  <div className="text-sm text-slate-600">Simulation</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to={createPageUrl('Analytics')}>
-            <Card className="border-2 border-slate-200 hover:border-green-400 hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-slate-900">View</div>
-                  <div className="text-sm text-slate-600">Analytics</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Card className="border-2 border-slate-200 hover:border-purple-400 hover:shadow-xl transition-all cursor-pointer group">
-            <CardContent className="p-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Upload className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-slate-900">Upload</div>
-                <div className="text-sm text-slate-600">Traffic Data</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Link to={createPageUrl('Settings')}>
-            <Card className="border-2 border-slate-200 hover:border-orange-400 hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Settings className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-slate-900">Manage</div>
-                  <div className="text-sm text-slate-600">Settings</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <MetricCard
+            title="Active Simulations"
+            value="3"
+            icon={Activity}
+            trend="up"
+            trendValue="+2"
+            colorClass="from-blue-500 to-blue-700"
+            loading={loading}
+          />
+          <MetricCard
+            title="Avg Efficiency"
+            value="89%"
+            icon={Zap}
+            trend="up"
+            trendValue="+5%"
+            colorClass="from-green-500 to-green-700"
+            loading={loading}
+          />
+          <MetricCard
+            title="Total Scenarios"
+            value="24"
+            icon={Users}
+            trend="up"
+            trendValue="+3"
+            colorClass="from-purple-500 to-purple-700"
+            loading={loading}
+          />
+          <MetricCard
+            title="Avg Wait Time"
+            value="42s"
+            icon={Clock}
+            trend="down"
+            trendValue="-8s"
+            colorClass="from-orange-500 to-orange-700"
+            loading={loading}
+          />
         </div>
 
-        <Card className="border-2 border-slate-200">
-          <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-slate-600">
-              Welcome to AI-Traffic Control! This dashboard is your central hub for managing traffic simulations and analyzing performance.
-            </p>
-            <div className="text-sm text-slate-500">
-              Phase 1 complete - Core UI foundation and navigation established.
-            </div>
-          </CardContent>
-        </Card>
+        {/* Quick Actions */}
+        <QuickActions />
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - 2 columns width */}
+          <div className="lg:col-span-2 space-y-6">
+            <RecentScenarios loading={loading} />
+            <AlertsPanel alerts={alerts} onDismiss={handleDismissAlert} />
+          </div>
+
+          {/* Right Column - 1 column width */}
+          <div className="space-y-6">
+            <SystemStatus loading={loading} />
+          </div>
+        </div>
       </div>
     </div>
   );
