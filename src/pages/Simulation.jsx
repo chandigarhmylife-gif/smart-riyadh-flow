@@ -12,6 +12,8 @@ import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
 import LiveAlerts from '../components/RealTime/LiveAlerts';
 import TrafficMap from '../components/Map/TrafficMap';
 import TrafficForecast24h from '../components/AI/TrafficForecast24h';
+import PublicTransitPriority from '../components/Transit/PublicTransitPriority';
+import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 
 export default function Simulation() {
   const [isRunning, setIsRunning] = useState(false);
@@ -120,6 +122,11 @@ export default function Simulation() {
           <div className="lg:col-span-3 space-y-4">
             <LiveMetricsStream isActive={isRunning} />
             <LiveAlerts isActive={isRunning} />
+            <PublicTransitPriority 
+              isRunning={isRunning}
+              onPriorityChange={(enabled) => console.log('Transit priority:', enabled)}
+            />
+            <TransitImpactAnalysis currentMetrics={metrics} />
             <TrafficForecast24h currentMetrics={metrics} />
             <TrafficAnalysis 
               trafficData={metrics}

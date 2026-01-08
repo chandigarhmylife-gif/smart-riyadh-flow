@@ -8,6 +8,8 @@ import WeatherImpact from '../components/Integration/WeatherImpact';
 import EmergencyPriority from '../components/Simulation/EmergencyPriority';
 import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
 import TrafficMap from '../components/Map/TrafficMap';
+import PublicTransitPriority from '../components/Transit/PublicTransitPriority';
+import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 
 export default function NetworkSimulation() {
   const [isRunning, setIsRunning] = useState(false);
@@ -94,6 +96,10 @@ export default function NetworkSimulation() {
           {/* Right Column - Controls & Metrics */}
           <div className="lg:col-span-4 space-y-4">
             <LiveMetricsStream isActive={isRunning} />
+            <PublicTransitPriority 
+              isRunning={isRunning}
+              onPriorityChange={(enabled) => console.log('Transit priority:', enabled)}
+            />
             <EmergencyPriority onEmergencyTrigger={handleEmergencyTrigger} />
           </div>
         </div>
@@ -103,6 +109,11 @@ export default function NetworkSimulation() {
           <VehicleTypes onDistributionChange={setVehicleDistribution} />
           <WeatherImpact onWeatherChange={setWeather} />
         </div>
+
+        {/* Transit Impact Analysis */}
+        <TransitImpactAnalysis 
+          currentMetrics={{ avgWaitTime: 38, throughput: 1247, efficiency: 87, queueLength: 12 }}
+        />
 
         {/* Network Statistics */}
         <div className="grid md:grid-cols-4 gap-4">
