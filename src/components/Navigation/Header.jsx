@@ -53,6 +53,21 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                     Analytics
                   </Button>
                 </Link>
+                <Link to={createPageUrl('ScenarioHistory')}>
+                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    History
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('RealTimeNetwork')}>
+                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Real-Time
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('APIConnections')}>
+                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    API
+                  </Button>
+                </Link>
               </>
             ) : (
               <>
@@ -145,6 +160,21 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                 <Link to={createPageUrl('Analytics')} className="block">
                   <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     Analytics
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('ScenarioHistory')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    History
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('RealTimeNetwork')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Real-Time
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('APIConnections')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    API
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Settings')} className="block">
