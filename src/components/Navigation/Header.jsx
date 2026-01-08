@@ -43,6 +43,11 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                     Simulation
                   </Button>
                 </Link>
+                <Link to={createPageUrl('NetworkSimulation')}>
+                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Network
+                  </Button>
+                </Link>
                 <Link to={createPageUrl('Analytics')}>
                   <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     Analytics
@@ -130,6 +135,11 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                 <Link to={createPageUrl('Simulation')} className="block">
                   <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     Simulation
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('NetworkSimulation')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Network
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Analytics')} className="block">
