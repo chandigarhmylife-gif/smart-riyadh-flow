@@ -1,27 +1,27 @@
-import Landing from './pages/Landing';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Simulation from './pages/Simulation';
 import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
-import Scenarios from './pages/Scenarios';
-import TrafficData from './pages/TrafficData';
-import Reports from './pages/Reports';
+import Dashboard from './pages/Dashboard';
+import Landing from './pages/Landing';
 import NetworkSimulation from './pages/NetworkSimulation';
+import Register from './pages/Register';
+import Reports from './pages/Reports';
+import Scenarios from './pages/Scenarios';
+import Settings from './pages/Settings';
+import Simulation from './pages/Simulation';
+import TrafficData from './pages/TrafficData';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Landing": Landing,
-    "Register": Register,
-    "Dashboard": Dashboard,
-    "Simulation": Simulation,
     "Analytics": Analytics,
-    "Settings": Settings,
-    "Scenarios": Scenarios,
-    "TrafficData": TrafficData,
-    "Reports": Reports,
+    "Dashboard": Dashboard,
+    "Landing": Landing,
     "NetworkSimulation": NetworkSimulation,
+    "Register": Register,
+    "Reports": Reports,
+    "Scenarios": Scenarios,
+    "Settings": Settings,
+    "Simulation": Simulation,
+    "TrafficData": TrafficData,
 }
 
 export const pagesConfig = {

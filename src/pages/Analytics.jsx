@@ -5,6 +5,7 @@ import { Download, Calendar } from 'lucide-react';
 import PerformanceChart from '../components/Analytics/PerformanceChart';
 import TrafficHeatmap from '../components/Analytics/TrafficHeatmap';
 import MetricsTable from '../components/Analytics/MetricsTable';
+import TrafficForecast24h from '../components/AI/TrafficForecast24h';
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState('7days');
@@ -61,6 +62,11 @@ export default function Analytics() {
 
         {/* Metrics Table */}
         <MetricsTable />
+
+        {/* 24-Hour Traffic Forecast */}
+        <TrafficForecast24h 
+          currentMetrics={{ avgWaitTime: 42, throughput: 156, efficiency: 89, queueLength: 8 }}
+        />
 
         {/* Summary Statistics */}
         <div className="grid md:grid-cols-3 gap-6">
