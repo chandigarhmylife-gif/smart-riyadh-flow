@@ -17,6 +17,9 @@ import TrafficData from './pages/TrafficData';
 import UserManagement from './pages/UserManagement';
 import AlertManagement from './pages/AlertManagement';
 import ModelManagement from './pages/ModelManagement';
+import PerformanceBaselines from './pages/PerformanceBaselines';
+import EmissionAnalytics from './pages/EmissionAnalytics';
+import PublicDisplay from './pages/PublicDisplay';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +43,9 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "AlertManagement": AlertManagement,
     "ModelManagement": ModelManagement,
+    "PerformanceBaselines": PerformanceBaselines,
+    "EmissionAnalytics": EmissionAnalytics,
+    "PublicDisplay": PublicDisplay,
 }
 
 export const pagesConfig = {

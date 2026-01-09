@@ -212,6 +212,21 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                     AI Models
                   </Button>
                 </Link>
+                <Link to={createPageUrl('PerformanceBaselines')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Baselines
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('EmissionAnalytics')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Emissions
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('PublicDisplay')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Public View
+                  </Button>
+                </Link>
                 <Link to={createPageUrl('Settings')} className="block">
                   <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     <SettingsIcon className="w-4 h-4 mr-2" />
