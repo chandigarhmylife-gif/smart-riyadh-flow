@@ -197,6 +197,21 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
                     Builder
                   </Button>
                 </Link>
+                <Link to={createPageUrl('UserManagement')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Users
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('AlertManagement')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    Alerts
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('ModelManagement')} className="block">
+                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                    AI Models
+                  </Button>
+                </Link>
                 <Link to={createPageUrl('Settings')} className="block">
                   <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
                     <SettingsIcon className="w-4 h-4 mr-2" />
