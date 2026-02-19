@@ -25,7 +25,7 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
               </div>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Smart Riyadh Flow
+              AI-Traffic Control
             </span>
           </Link>
 
