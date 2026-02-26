@@ -71,23 +71,76 @@ export default function Reports() {
       .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim())
       .join(', ');
 
-    const prompt = `You are an expert traffic engineer. Generate a comprehensive, professional traffic control report in Markdown format.
+    const prompt = `You are a senior traffic engineering consultant with 20+ years of experience. Generate a highly detailed, professional traffic control performance report in Markdown format. This report should be comprehensive enough to present to a city council or transportation authority.
 
-Report Type: ${selectedTemplate.name}
-Description: ${selectedTemplate.description}
-Date Range: ${dateRange.start || 'Jan 1, 2026'} to ${dateRange.end || 'Feb 26, 2026'}
-Selected Metrics: ${activeMetrics}
+**Report Configuration:**
+- Report Type: ${selectedTemplate.name}
+- Description: ${selectedTemplate.description}
+- Date Range: ${dateRange.start || 'January 1, 2026'} to ${dateRange.end || 'February 26, 2026'}
+- Selected Metrics: ${activeMetrics}
+- City: Riyadh, Saudi Arabia (Smart Riyadh Flow initiative)
 
-The report must include:
-1. A title and executive summary
-2. Key findings section with bullet points
-3. Detailed analysis for each selected metric (${activeMetrics}) using realistic traffic data values with tables where appropriate
-4. Performance comparison: AI Adaptive Control vs Fixed-Time Control
-5. Charts description (describe what charts would show)
-6. Recommendations section with numbered action items
-7. Conclusion
+**Required Sections (be thorough and detailed in each):**
 
-Use real-looking data values, percentages, and statistics throughout. Format it professionally with headers, subheaders, tables, and bold highlights.`;
+## 1. Title Page & Report Metadata
+Include report title, date, version, prepared by, and classification.
+
+## 2. Executive Summary (3–4 paragraphs)
+High-level summary of findings, overall system performance, and top recommendations. Include headline statistics.
+
+## 3. System Overview
+Describe the Smart Riyadh Flow adaptive signal control system, the intersections monitored, time period, and data sources used.
+
+## 4. Key Performance Indicators (KPI) Dashboard
+A markdown table with the following columns: KPI | Baseline (Fixed-Time) | AI Adaptive Control | Improvement | Target
+Include at minimum: Average Wait Time, Vehicle Throughput, Signal Efficiency, Queue Length, Average Travel Speed, Fuel Consumption, CO₂ Emissions, Stop-and-Go Events.
+Use realistic Riyadh traffic data values.
+
+## 5. Detailed Metric Analysis
+For each selected metric (${activeMetrics}), provide:
+- Current values with breakdown by time of day (Morning Peak 7–9AM, Midday 11AM–1PM, Evening Peak 4–7PM, Off-Peak)
+- A markdown table of hourly or daily data
+- Trend analysis (improving/declining/stable)
+- Comparison to regional and international benchmarks
+
+## 6. Traffic Flow Analysis
+- Intersection-level performance table (at least 5 intersections with names, volumes, LOS grade, wait time)
+- Peak hour factor analysis
+- Bottleneck identification with specific locations
+- Queue propagation impact
+
+## 7. AI Adaptive Control vs. Fixed-Time Control Comparison
+A detailed side-by-side comparison table covering: wait time, throughput, efficiency, emissions, fuel savings, travel time reliability.
+Include percentage improvements and annualized projections.
+
+## 8. Incident & Anomaly Log
+Table of notable traffic incidents, their duration, affected intersections, and system response.
+
+## 9. Environmental Impact Assessment
+- CO₂ reduction estimates (tons/day, tons/year)
+- Fuel savings (liters/day, cost savings in SAR)
+- Noise pollution reduction estimate
+- Alignment with Saudi Vision 2030 sustainability goals
+
+## 10. Recommendations
+At least 8 numbered, actionable recommendations with: priority level (High/Medium/Low), estimated impact, implementation timeline, and responsible department.
+
+## 11. Risk Assessment
+Table of risks: Risk | Likelihood | Impact | Mitigation Strategy
+
+## 12. Next Steps & Implementation Roadmap
+Phased plan for the next 6 months with milestones.
+
+## 13. Conclusion
+Strong closing paragraph summarizing value delivered and path forward.
+
+**Style requirements:**
+- Use realistic, specific numbers throughout (not ranges — pick exact values)
+- Include markdown tables wherever data is presented
+- Use **bold** for key statistics and findings
+- Use > blockquotes for important callouts
+- Be specific about Riyadh intersections (e.g., King Fahd Road / Olaya Street, King Abdullah Road / Tahlia Street)
+- Minimum length: very thorough and comprehensive`;
 
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     setGeneratedReport({
