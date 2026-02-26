@@ -162,6 +162,12 @@ Strong closing paragraph summarizing value delivered and path forward.
     {generatedReport && (
       <GeneratedReportModal report={generatedReport} onClose={() => setGeneratedReport(null)} />
     )}
+    {showShareModal && (
+      <ShareCollaborationModal report={generatedReport} onClose={() => setShowShareModal(false)} />
+    )}
+    {showInteractiveDashboard && (
+      <InteractiveDashboardModal onClose={() => setShowInteractiveDashboard(false)} />
+    )}
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
