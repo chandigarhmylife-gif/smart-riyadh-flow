@@ -98,6 +98,9 @@ Use real-looking data values, percentages, and statistics throughout. Format it 
   };
 
   return (
+    {generatedReport && (
+      <GeneratedReportModal report={generatedReport} onClose={() => setGeneratedReport(null)} />
+    )}
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
