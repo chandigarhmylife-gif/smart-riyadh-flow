@@ -12,6 +12,10 @@ import ScheduledReportsPanel from '../components/Reports/ScheduledReportsPanel';
 import AdvancedCustomization from '../components/Reports/AdvancedCustomization';
 import ShareCollaborationModal from '../components/Reports/ShareCollaborationModal';
 import InteractiveDashboardModal from '../components/Reports/InteractiveDashboardModal';
+import BenchmarkGoals from '../components/Reports/BenchmarkGoals';
+import AIDeepInsights from '../components/Reports/AIDeepInsights';
+import AutomatedDistribution from '../components/Reports/AutomatedDistribution';
+import CustomTemplateBuilder from '../components/Reports/CustomTemplateBuilder';
 import { base44 } from '@/api/base44Client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
