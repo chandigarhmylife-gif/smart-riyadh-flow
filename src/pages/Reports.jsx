@@ -284,5 +284,6 @@ Use real-looking data values, percentages, and statistics throughout. Format it 
         </div>
       </div>
     </div>
+    </>
   );
 }
