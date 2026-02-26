@@ -20,6 +20,8 @@ export default function Reports() {
     emissions: false,
     queueLength: false
   });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState(null);
 
   const templates = [
     {
