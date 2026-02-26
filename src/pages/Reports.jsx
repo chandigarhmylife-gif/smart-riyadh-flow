@@ -191,11 +191,20 @@ Use real-looking data values, percentages, and statistics throughout. Format it 
             {/* Generate Button */}
             <Button
               onClick={handleGenerateReport}
-              disabled={!selectedTemplate}
+              disabled={!selectedTemplate || isGenerating}
               className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg"
             >
-              <FileDown className="w-5 h-5 mr-2" />
-              Generate Report
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Generating Report...
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-5 h-5 mr-2" />
+                  Generate Report
+                </>
+              )}
             </Button>
           </div>
 
