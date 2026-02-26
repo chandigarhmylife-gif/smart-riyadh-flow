@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileDown, Calendar, Search, Eye } from 'lucide-react';
+import { FileDown, Calendar, Eye, Loader2 } from 'lucide-react';
 import ReportTemplate from '../components/Reports/ReportTemplate';
 import ReportGenerator from '../components/AI/ReportGenerator';
+import GeneratedReportModal from '../components/Reports/GeneratedReportModal';
+import { base44 } from '@/api/base44Client';
 
 export default function Reports() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
