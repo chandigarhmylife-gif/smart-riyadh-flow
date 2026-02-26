@@ -4,11 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileDown, Calendar, Eye, Loader2 } from 'lucide-react';
+import { FileDown, Calendar, Eye, Loader2, LayoutDashboard, Share2, ChevronDown } from 'lucide-react';
 import ReportTemplate from '../components/Reports/ReportTemplate';
 import ReportGenerator from '../components/AI/ReportGenerator';
 import GeneratedReportModal from '../components/Reports/GeneratedReportModal';
+import ScheduledReportsPanel from '../components/Reports/ScheduledReportsPanel';
+import AdvancedCustomization from '../components/Reports/AdvancedCustomization';
+import ShareCollaborationModal from '../components/Reports/ShareCollaborationModal';
+import InteractiveDashboardModal from '../components/Reports/InteractiveDashboardModal';
 import { base44 } from '@/api/base44Client';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Reports() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
