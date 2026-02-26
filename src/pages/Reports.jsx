@@ -359,6 +359,9 @@ Strong closing paragraph summarizing value delivered and path forward.
               </CardContent>
             </Card>
 
+            {/* Scheduled Reports */}
+            <ScheduledReportsPanel />
+
             {/* AI Report Generator */}
             <ReportGenerator 
               scenarioData={{ name: 'Current Analysis' }}
