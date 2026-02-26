@@ -372,6 +372,12 @@ Strong closing paragraph summarizing value delivered and path forward.
             {/* Scheduled Reports */}
             <ScheduledReportsPanel />
 
+            {/* AI Deep Insights */}
+            <AIDeepInsights reportTitle={generatedReport?.title} />
+
+            {/* Automated Distribution */}
+            <AutomatedDistribution report={generatedReport} />
+
             {/* AI Report Generator */}
             <ReportGenerator 
               scenarioData={{ name: 'Current Analysis' }}
