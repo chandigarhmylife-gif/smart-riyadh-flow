@@ -262,6 +262,12 @@ Strong closing paragraph summarizing value delivered and path forward.
             {/* Advanced Customization */}
             <AdvancedCustomization />
 
+            {/* Benchmarking & Goals */}
+            <BenchmarkGoals />
+
+            {/* Custom Template Builder */}
+            <CustomTemplateBuilder />
+
             {/* Generate Button Row */}
             <div className="flex gap-3">
               <Button
