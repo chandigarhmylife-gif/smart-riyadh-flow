@@ -27,6 +27,8 @@ export default function Reports() {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedReport, setGeneratedReport] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showInteractiveDashboard, setShowInteractiveDashboard] = useState(false);
 
   const templates = [
     {
