@@ -64,8 +64,37 @@ export default function Reports() {
     { id: 3, name: 'Monthly Performance Report', date: '2024-01-01', type: 'PDF' }
   ];
 
-  const handleGenerateReport = () => {
-    console.log('Generating report:', { selectedTemplate, dateRange, selectedMetrics });
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    const activeMetrics = Object.entries(selectedMetrics)
+      .filter(([, v]) => v)
+      .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim())
+      .join(', ');
+
+    const prompt = `You are an expert traffic engineer. Generate a comprehensive, professional traffic control report in Markdown format.
+
+Report Type: ${selectedTemplate.name}
+Description: ${selectedTemplate.description}
+Date Range: ${dateRange.start || 'Jan 1, 2026'} to ${dateRange.end || 'Feb 26, 2026'}
+Selected Metrics: ${activeMetrics}
+
+The report must include:
+1. A title and executive summary
+2. Key findings section with bullet points
+3. Detailed analysis for each selected metric (${activeMetrics}) using realistic traffic data values with tables where appropriate
+4. Performance comparison: AI Adaptive Control vs Fixed-Time Control
+5. Charts description (describe what charts would show)
+6. Recommendations section with numbered action items
+7. Conclusion
+
+Use real-looking data values, percentages, and statistics throughout. Format it professionally with headers, subheaders, tables, and bold highlights.`;
+
+    const result = await base44.integrations.Core.InvokeLLM({ prompt });
+    setGeneratedReport({
+      title: `${selectedTemplate.name} — ${dateRange.start || 'Jan 2026'} to ${dateRange.end || 'Feb 2026'}`,
+      content: result
+    });
+    setIsGenerating(false);
   };
 
   return (
