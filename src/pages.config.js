@@ -54,6 +54,7 @@ import Dashboard from './pages/Dashboard';
 import DeviceManagement from './pages/DeviceManagement';
 import EmissionAnalytics from './pages/EmissionAnalytics';
 import IncidentManagement from './pages/IncidentManagement';
+import Landing from './pages/Landing';
 import ModelManagement from './pages/ModelManagement';
 import NetworkSimulation from './pages/NetworkSimulation';
 import PerformanceBaselines from './pages/PerformanceBaselines';
@@ -67,7 +68,6 @@ import Settings from './pages/Settings';
 import Simulation from './pages/Simulation';
 import TrafficData from './pages/TrafficData';
 import UserManagement from './pages/UserManagement';
-import Landing from './pages/Landing';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +79,7 @@ export const PAGES = {
     "DeviceManagement": DeviceManagement,
     "EmissionAnalytics": EmissionAnalytics,
     "IncidentManagement": IncidentManagement,
+    "Landing": Landing,
     "ModelManagement": ModelManagement,
     "NetworkSimulation": NetworkSimulation,
     "PerformanceBaselines": PerformanceBaselines,
@@ -92,7 +93,6 @@ export const PAGES = {
     "Simulation": Simulation,
     "TrafficData": TrafficData,
     "UserManagement": UserManagement,
-    "Landing": Landing,
 }
 
 export const pagesConfig = {

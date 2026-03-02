@@ -262,41 +262,10 @@ Strong closing paragraph summarizing value delivered and path forward.
                 ) : (
                   <>
                     <FileDown className="w-5 h-5 mr-2" />
-                    Generate Report
+                    Generate Report (PDF)
                   </>
                 )}
               </Button>
-
-              {/* Multi-format Export */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="py-6 px-4" disabled={!generatedReport}>
-                    Export <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => {
-                    if (!generatedReport) return;
-                    const blob = new Blob([generatedReport.content], { type: 'text/markdown' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = 'report.md'; a.click();
-                  }}>Markdown (.md)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    if (!generatedReport) return;
-                    const blob = new Blob([generatedReport.content], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = 'report.txt'; a.click();
-                  }}>Plain Text (.txt)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    if (!generatedReport) return;
-                    const csvContent = 'Metric,Value\nAvg Wait Time,38s\nThroughput,1820 veh/hr\nEfficiency,89%\nCO2 Saved,4.2 tons/day';
-                    const blob = new Blob([csvContent], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = 'report_data.csv'; a.click();
-                  }}>CSV Data (.csv)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.print()}>Print / PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
             {/* Post-generation actions */}
