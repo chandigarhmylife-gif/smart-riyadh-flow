@@ -583,29 +583,49 @@ export default function GeneratedReportModal({ report, onClose }) {
     }
   };
 
+  const handlePrintPDF = () => {
+    const printWindow = window.open('', '_blank');
+    const reportEl = document.getElementById('report-print-content');
+    if (!reportEl || !printWindow) return;
+
+    // Gather all stylesheets from the current page
+    const styles = Array.from(document.styleSheets).map(sheet => {
+      try {
+        return Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+      } catch { return ''; }
+    }).join('\n');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${report.title}</title>
+          <style>${styles}</style>
+          <style>
+            body { background: white; margin: 0; padding: 20px; font-family: sans-serif; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          </style>
+        </head>
+        <body>
+          ${reportEl.innerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  };
+
   return (
     <div>
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #report-print-content, #report-print-content * { visibility: visible; }
-          #report-print-content {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            padding: 20px;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
       <div id="report-print-root" className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4">
         <div className="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col">
 
           {/* Toolbar */}
-          <div className="no-print flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white rounded-t-2xl flex-shrink-0">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white rounded-t-2xl flex-shrink-0">
             <div>
               <h2 className="text-lg font-bold text-slate-900 leading-tight">{report.title}</h2>
               <p className="text-xs text-slate-400">
@@ -613,7 +633,7 @@ export default function GeneratedReportModal({ report, onClose }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" className={`text-white`} style={{ backgroundColor: config.theme.accent }} onClick={handlePrint}>
+              <Button size="sm" className={`text-white`} style={{ backgroundColor: config.theme.accent }} onClick={handlePrintPDF}>
                 <Printer className="w-4 h-4 mr-1" /> Download PDF
               </Button>
               <Button variant="ghost" size="icon" onClick={onClose}><X className="w-5 h-5" /></Button>
@@ -636,7 +656,7 @@ export default function GeneratedReportModal({ report, onClose }) {
                 <p>Template: {config.label} · Confidential · For Official Use Only</p>
               </div>
             </div>
-            </div>{/* end report-print-content */}
+            </div>
           </div>
         </div>
       </div>
