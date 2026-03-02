@@ -60,7 +60,6 @@ import NetworkSimulation from './pages/NetworkSimulation';
 import PerformanceBaselines from './pages/PerformanceBaselines';
 import PublicDisplay from './pages/PublicDisplay';
 import RealTimeNetwork from './pages/RealTimeNetwork';
-import Register from './pages/Register';
 import Reports from './pages/Reports';
 import ScenarioBuilder from './pages/ScenarioBuilder';
 import ScenarioHistory from './pages/ScenarioHistory';
@@ -86,7 +85,6 @@ export const PAGES = {
     "PerformanceBaselines": PerformanceBaselines,
     "PublicDisplay": PublicDisplay,
     "RealTimeNetwork": RealTimeNetwork,
-    "Register": Register,
     "Reports": Reports,
     "ScenarioBuilder": ScenarioBuilder,
     "ScenarioHistory": ScenarioHistory,
