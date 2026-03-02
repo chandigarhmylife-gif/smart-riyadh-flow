@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Menu, X, User, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
   return (
