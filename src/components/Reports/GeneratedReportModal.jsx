@@ -584,7 +584,7 @@ export default function GeneratedReportModal({ report, onClose }) {
   };
 
   return (
-    <>
+    <div>
       <style>{`
         @media print {
           body * { visibility: hidden; }
