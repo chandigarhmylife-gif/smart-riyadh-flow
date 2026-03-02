@@ -48,7 +48,7 @@ export default function Landing() {
                     size="lg" 
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group"
                   >
-                    Get Started Free
+                    Get Started
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
