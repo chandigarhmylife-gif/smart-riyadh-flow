@@ -156,7 +156,8 @@ Strong closing paragraph summarizing value delivered and path forward.
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     setGeneratedReport({
       title: `${selectedTemplate.name} — ${dateRange.start || 'Jan 2026'} to ${dateRange.end || 'Feb 2026'}`,
-      content: result
+      content: result,
+      templateType: selectedTemplate.type,
     });
     setIsGenerating(false);
   };
