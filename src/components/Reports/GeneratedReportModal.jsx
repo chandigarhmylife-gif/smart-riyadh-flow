@@ -639,6 +639,7 @@ export default function GeneratedReportModal({ report, onClose }) {
                 <p>Template: {config.label} · Confidential · For Official Use Only</p>
               </div>
             </div>
+            </div>{/* end report-print-content */}
           </div>
         </div>
       </div>
