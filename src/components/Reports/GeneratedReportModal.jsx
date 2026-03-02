@@ -579,10 +579,16 @@ export default function GeneratedReportModal({ report, onClose }) {
 
   const renderLayout = () => {
     switch (templateType) {
-      case 'daily':      return <DailyLayout report={report} config={config} />;
-      case 'comparison': return <ComparisonLayout report={report} config={config} />;
-      case 'performance': return <PerformanceLayout report={report} config={config} />;
-      default:           return <SummaryLayout report={report} config={config} />;
+      case 'daily':          return <DailyLayout report={report} config={config} />;
+      case 'comparison':     return <ComparisonLayout report={report} config={config} />;
+      case 'performance':    return <PerformanceLayout report={report} config={config} />;
+      case 'environmental':  return <EnvironmentalLayout report={report} config={config} />;
+      case 'peak_hour':      return <PeakHourLayout report={report} config={config} />;
+      case 'monthly_trend':  return <MonthlyTrendLayout report={report} config={config} />;
+      case 'safety':         return <SafetyLayout report={report} config={config} />;
+      case 'network':        return <NetworkLayout report={report} config={config} />;
+      case 'roi':            return <ROILayout report={report} config={config} />;
+      default:               return <SummaryLayout report={report} config={config} />;
     }
   };
 
