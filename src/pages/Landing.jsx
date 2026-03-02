@@ -333,7 +333,7 @@ export default function Landing() {
                 size="lg" 
                 className="bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group"
               >
-                Start Free Trial
+                Get Started
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
