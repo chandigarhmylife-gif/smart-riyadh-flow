@@ -567,15 +567,6 @@ export default function GeneratedReportModal({ report, onClose }) {
   const { theme } = config;
 
   const handlePrint = () => window.print();
-  const handleDownloadMD = () => {
-    const blob = new Blob([report.content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.title.replace(/\s+/g, '_')}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const renderLayout = () => {
     switch (templateType) {
