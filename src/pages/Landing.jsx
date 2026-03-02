@@ -45,8 +45,8 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to={createPageUrl('Dashboard')}>
                   <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group">
+                    size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 h-10 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group">
+
 
                     Get Started Free
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -330,8 +330,8 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to={createPageUrl('Dashboard')}>
               <Button
-                size="lg"
-                className="bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group">
+                size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 rounded-md bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group">
+
 
                 Start Free Trial
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
