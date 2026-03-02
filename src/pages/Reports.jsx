@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileDown, Calendar, Eye, Loader2, LayoutDashboard, Share2, ChevronDown } from 'lucide-react';
+import { FileDown, Calendar, Eye, Loader2, LayoutDashboard, Share2 } from 'lucide-react';
 import ReportTemplate from '../components/Reports/ReportTemplate';
 import ReportGenerator from '../components/AI/ReportGenerator';
 import GeneratedReportModal from '../components/Reports/GeneratedReportModal';
