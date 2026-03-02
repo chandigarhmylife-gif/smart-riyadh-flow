@@ -605,11 +605,8 @@ export default function GeneratedReportModal({ report, onClose }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleDownloadMD}>
-                <FileDown className="w-4 h-4 mr-1" /> Markdown
-              </Button>
               <Button size="sm" className={`text-white`} style={{ backgroundColor: config.theme.accent }} onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-1" /> Print / PDF
+                <Printer className="w-4 h-4 mr-1" /> Download PDF
               </Button>
               <Button variant="ghost" size="icon" onClick={onClose}><X className="w-5 h-5" /></Button>
             </div>
