@@ -57,45 +57,13 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
             </Link>
           </nav>
 
-          {/* Auth Buttons / User Menu */}
+          {/* Settings Link */}
           <div className="hidden md:flex items-center space-x-3">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700">{user.full_name || user.email}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link to={createPageUrl('Settings')} className="flex items-center">
-                      <SettingsIcon className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center text-red-600">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                <Link to={createPageUrl('Login')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Login
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Register')}>
-                  <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/30">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
+            <Link to={createPageUrl('Settings')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                <SettingsIcon className="w-4 h-4 mr-1" /> Settings
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
