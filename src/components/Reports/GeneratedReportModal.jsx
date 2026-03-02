@@ -11,6 +11,10 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, AreaChart, Area,
 } from 'recharts';
 import { TEMPLATE_CONFIGS } from './templateConfigs';
+import {
+  EnvironmentalLayout, PeakHourLayout, MonthlyTrendLayout,
+  SafetyLayout, NetworkLayout, ROILayout,
+} from './ExtraLayouts';
 
 const ICON_MAP = { Clock, Car, Zap, Leaf, AlertTriangle, TrendingUp, Users, Target };
 const LOS_COLOR = {
