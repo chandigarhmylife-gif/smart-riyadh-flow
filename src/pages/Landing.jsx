@@ -52,15 +52,7 @@ export default function Landing() {
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <a href="#demo">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-2 border-slate-300 hover:border-blue-600 hover:bg-blue-50 text-slate-700 text-lg px-8 py-6"
-                  >
-                    Watch Demo
-                  </Button>
-                </a>
+
               </div>
 
               <div className="flex items-center space-x-8 pt-4">
