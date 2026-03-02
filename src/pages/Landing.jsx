@@ -338,13 +338,13 @@ export default function Landing() {
               </Button>
             </Link>
             <Link to={createPageUrl('Dashboard')}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6">
+              
 
-                Sign In
-              </Button>
+
+
+
+
+
             </Link>
           </div>
         </div>
