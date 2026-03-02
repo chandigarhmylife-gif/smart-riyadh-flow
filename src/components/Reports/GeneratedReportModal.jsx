@@ -590,14 +590,11 @@ export default function GeneratedReportModal({ report, onClose }) {
           body * { visibility: hidden; }
           #report-print-content, #report-print-content * { visibility: visible; }
           #report-print-content {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: auto;
-            overflow: visible;
             background: white;
-            z-index: 9999;
             padding: 20px;
           }
           .no-print { display: none !important; }
