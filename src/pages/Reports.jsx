@@ -17,7 +17,6 @@ import AIDeepInsights from '../components/Reports/AIDeepInsights';
 import AutomatedDistribution from '../components/Reports/AutomatedDistribution';
 import CustomTemplateBuilder from '../components/Reports/CustomTemplateBuilder';
 import { base44 } from '@/api/base44Client';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Reports() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
