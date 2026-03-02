@@ -643,6 +643,6 @@ export default function GeneratedReportModal({ report, onClose }) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
