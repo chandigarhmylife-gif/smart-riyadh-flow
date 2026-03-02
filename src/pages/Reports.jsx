@@ -35,38 +35,16 @@ export default function Reports() {
   const [showInteractiveDashboard, setShowInteractiveDashboard] = useState(false);
 
   const templates = [
-    {
-      id: 1,
-      name: 'Performance Summary',
-      description: 'Overview of traffic control performance with key metrics',
-      type: 'summary',
-      metrics: 8,
-      pages: 4
-    },
-    {
-      id: 2,
-      name: 'Daily Analysis',
-      description: 'Detailed breakdown of daily traffic patterns',
-      type: 'daily',
-      metrics: 12,
-      pages: 8
-    },
-    {
-      id: 3,
-      name: 'Comparison Report',
-      description: 'AI control vs fixed-time comparison analysis',
-      type: 'comparison',
-      metrics: 10,
-      pages: 6
-    },
-    {
-      id: 4,
-      name: 'Performance Metrics',
-      description: 'Comprehensive metrics and KPI analysis',
-      type: 'performance',
-      metrics: 15,
-      pages: 10
-    }
+    { id: 1, name: 'Performance Summary', description: 'Executive-level KPI overview for senior leadership', type: 'summary', metrics: 8, pages: 4 },
+    { id: 2, name: 'Daily Analysis', description: '24-hour operational breakdown with incident log', type: 'daily', metrics: 12, pages: 8 },
+    { id: 3, name: 'Comparison Report', description: 'AI vs fixed-time side-by-side with radar analysis', type: 'comparison', metrics: 10, pages: 6 },
+    { id: 4, name: 'Performance Metrics', description: 'Deep technical KPIs vs global engineering benchmarks', type: 'performance', metrics: 15, pages: 10 },
+    { id: 5, name: 'Environmental Impact', description: 'CO₂, fuel savings, and Vision 2030 sustainability alignment', type: 'environmental', metrics: 9, pages: 6 },
+    { id: 6, name: 'Peak Hour Analysis', description: 'AM/PM congestion, bottleneck mapping, queue propagation', type: 'peak_hour', metrics: 11, pages: 7 },
+    { id: 7, name: 'Monthly Trend Report', description: '6-month trend analysis with growth forecasting', type: 'monthly_trend', metrics: 10, pages: 6 },
+    { id: 8, name: 'Safety & Incident Report', description: 'Incident frequency, near-miss analysis, emergency response', type: 'safety', metrics: 8, pages: 5 },
+    { id: 9, name: 'Network Efficiency', description: 'City-wide signal coordination, corridors, green wave uptime', type: 'network', metrics: 12, pages: 8 },
+    { id: 10, name: 'ROI & Cost-Benefit', description: 'Financial return, break-even analysis, 10-year NPV model', type: 'roi', metrics: 7, pages: 5 },
   ];
 
   const historicalReports = [
