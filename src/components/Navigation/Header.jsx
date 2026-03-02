@@ -31,63 +31,30 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
-            {user ? (
-              <>
-                <Link to={createPageUrl('Dashboard')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Simulation')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Simulation
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('NetworkSimulation')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Network
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Analytics')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Analytics
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('ScenarioHistory')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    History
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('RealTimeNetwork')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Real-Time
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('APIConnections')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    API
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('ScenarioBuilder')}>
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Builder
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <a href="#features">
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Features
-                  </Button>
-                </a>
-                <a href="#benefits">
-                  <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Benefits
-                  </Button>
-                </a>
-              </>
-            )}
+            <Link to={createPageUrl('Dashboard')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Dashboard</Button>
+            </Link>
+            <Link to={createPageUrl('Simulation')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Simulation</Button>
+            </Link>
+            <Link to={createPageUrl('NetworkSimulation')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Network</Button>
+            </Link>
+            <Link to={createPageUrl('Analytics')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Analytics</Button>
+            </Link>
+            <Link to={createPageUrl('ScenarioHistory')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">History</Button>
+            </Link>
+            <Link to={createPageUrl('RealTimeNetwork')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Real-Time</Button>
+            </Link>
+            <Link to={createPageUrl('APIConnections')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">API</Button>
+            </Link>
+            <Link to={createPageUrl('ScenarioBuilder')}>
+              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Builder</Button>
+            </Link>
           </nav>
 
           {/* Auth Buttons / User Menu */}
