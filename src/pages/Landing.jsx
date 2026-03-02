@@ -43,7 +43,7 @@ export default function Landing() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to={createPageUrl('Dashboard')}>
+                <Link to={createPageUrl('Register')}>
                   <Button 
                     size="lg" 
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group"
