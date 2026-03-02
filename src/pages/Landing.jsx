@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  ArrowRight,
-  Brain,
-  BarChart3,
-  Zap,
-  Shield,
-  Clock,
+import { 
+  ArrowRight, 
+  Brain, 
+  BarChart3, 
+  Zap, 
+  Shield, 
+  Clock, 
   TrendingDown,
   CheckCircle2,
-  XCircle } from
-'lucide-react';
+  XCircle
+} from 'lucide-react';
 
 export default function Landing() {
   return (
@@ -44,22 +44,22 @@ export default function Landing() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to={createPageUrl('Dashboard')}>
-                  <Button
-                    size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 h-10 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group">
-
-
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-2xl shadow-blue-500/30 text-lg px-8 py-6 group"
+                  >
                     Get Started Free
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <a href="#demo">
-                  
-
-
-
-
-
-
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-2 border-slate-300 hover:border-blue-600 hover:bg-blue-50 text-slate-700 text-lg px-8 py-6"
+                  >
+                    Watch Demo
+                  </Button>
                 </a>
               </div>
 
@@ -329,22 +329,22 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to={createPageUrl('Dashboard')}>
-              <Button
-                size="lg"
-                className="bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group">
-
+              <Button 
+                size="lg" 
+                className="bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group"
+              >
                 Start Free Trial
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link to={createPageUrl('Dashboard')}>
-              
-
-
-
-
-
-
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6"
+              >
+                Sign In
+              </Button>
             </Link>
           </div>
         </div>
@@ -373,6 +373,6 @@ export default function Landing() {
           animation: float 3s ease-in-out infinite;
         }
       `}</style>
-    </div>);
-
+    </div>
+  );
 }
