@@ -328,7 +328,7 @@ export default function Landing() {
             Join traffic engineers and urban planners using AI to build smarter cities
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to={createPageUrl('Register')}>
+            <Link to={createPageUrl('Dashboard')}>
               <Button 
                 size="lg" 
                 className="bg-white text-blue-700 hover:bg-blue-50 shadow-2xl text-lg px-8 py-6 group"
@@ -337,7 +337,7 @@ export default function Landing() {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to={createPageUrl('Login')}>
+            <Link to={createPageUrl('Dashboard')}>
               <Button 
                 size="lg" 
                 variant="outline" 
