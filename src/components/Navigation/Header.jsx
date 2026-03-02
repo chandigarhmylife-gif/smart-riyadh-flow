@@ -80,113 +80,29 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-slate-200 shadow-lg">
           <div className="px-4 py-4 space-y-2">
-            {user ? (
-              <>
-                <Link to={createPageUrl('Dashboard')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Simulation')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Simulation
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('NetworkSimulation')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Network
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Analytics')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Analytics
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('ScenarioHistory')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    History
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('RealTimeNetwork')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Real-Time
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('APIConnections')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    API
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('IncidentManagement')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Incidents
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('DeviceManagement')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Devices
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('ScenarioBuilder')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Builder
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('UserManagement')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Users
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('AlertManagement')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Alerts
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('ModelManagement')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    AI Models
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('PerformanceBaselines')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Baselines
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('EmissionAnalytics')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Emissions
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('PublicDisplay')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Public View
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Settings')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    <SettingsIcon className="w-4 h-4 mr-2" />
-                    Settings
-                  </Button>
-                </Link>
-                <Button variant="ghost" className="w-full justify-start text-red-600 hover:bg-red-50">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+            {[
+              { label: 'Dashboard', page: 'Dashboard' },
+              { label: 'Simulation', page: 'Simulation' },
+              { label: 'Network', page: 'NetworkSimulation' },
+              { label: 'Analytics', page: 'Analytics' },
+              { label: 'History', page: 'ScenarioHistory' },
+              { label: 'Real-Time', page: 'RealTimeNetwork' },
+              { label: 'API', page: 'APIConnections' },
+              { label: 'Builder', page: 'ScenarioBuilder' },
+              { label: 'Incidents', page: 'IncidentManagement' },
+              { label: 'Devices', page: 'DeviceManagement' },
+              { label: 'AI Models', page: 'ModelManagement' },
+              { label: 'Baselines', page: 'PerformanceBaselines' },
+              { label: 'Emissions', page: 'EmissionAnalytics' },
+              { label: 'Public View', page: 'PublicDisplay' },
+              { label: 'Settings', page: 'Settings' },
+            ].map(({ label, page }) => (
+              <Link key={page} to={createPageUrl(page)} className="block">
+                <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
+                  {label}
                 </Button>
-              </>
-            ) : (
-              <>
-                <Link to={createPageUrl('Login')} className="block">
-                  <Button variant="ghost" className="w-full justify-start text-slate-700 hover:text-blue-600 hover:bg-blue-50">
-                    Login
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Register')} className="block">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
+              </Link>
+            ))}
           </div>
         </div>
       )}
