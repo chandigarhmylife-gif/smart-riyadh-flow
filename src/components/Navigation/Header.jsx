@@ -11,13 +11,7 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to={createPageUrl('Landing')} className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center transform group-hover:scale-105 transition-transform">
-              <div className="w-6 h-6 border-2 border-white rounded-full relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                </div>
-              </div>
-            </div>
+
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               Smart Riyadh Flow
             </span>
