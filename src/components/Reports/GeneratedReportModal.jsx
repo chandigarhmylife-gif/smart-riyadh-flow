@@ -61,18 +61,22 @@ function SectionHeader({ number, title, gradient }) {
 function NarrativeSection({ content, sectionNum, gradient, theme }) {
   return (
     <div>
-      <SectionHeader number={sectionNum} title="Full AI-Generated Narrative" gradient={gradient} />
-      <div className={`bg-white rounded-xl border ${theme.accentBorder} p-6 shadow-sm prose prose-slate max-w-none
+      <SectionHeader number={sectionNum} title="Detailed Analysis & Full Report Content" gradient={gradient} />
+      <div className={`bg-white rounded-xl border ${theme.accentBorder} p-8 shadow-sm prose prose-slate max-w-none
         prose-headings:text-slate-900 prose-headings:font-bold
-        prose-h1:text-2xl prose-h1:border-b prose-h1:pb-2 prose-h1:mb-4
-        prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3
-        prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2
-        prose-p:text-slate-700 prose-p:leading-relaxed
-        prose-strong:text-slate-900
-        prose-table:w-full prose-th:bg-slate-100 prose-th:px-3 prose-th:py-2 prose-th:text-left
-        prose-td:px-3 prose-td:py-2 prose-td:border prose-td:border-slate-200
-        prose-li:text-slate-700
-        prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:rounded
+        prose-h1:text-3xl prose-h1:border-b-2 prose-h1:border-slate-300 prose-h1:pb-3 prose-h1:mb-6 prose-h1:mt-8
+        prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2
+        prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-slate-800
+        prose-h4:text-lg prose-h4:mt-6 prose-h4:mb-2 prose-h4:text-slate-700
+        prose-p:text-slate-700 prose-p:leading-relaxed prose-p:text-base prose-p:mb-4
+        prose-strong:text-slate-900 prose-strong:font-semibold
+        prose-table:w-full prose-table:text-sm prose-table:border-collapse
+        prose-th:bg-slate-100 prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:border prose-th:border-slate-200
+        prose-td:px-4 prose-td:py-2.5 prose-td:border prose-td:border-slate-200
+        prose-li:text-slate-700 prose-li:mb-1
+        prose-ul:my-3 prose-ol:my-3
+        prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:px-5 prose-blockquote:py-3 prose-blockquote:rounded prose-blockquote:my-4
+        prose-hr:border-slate-200 prose-hr:my-8
       `}>
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
