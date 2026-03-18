@@ -32,11 +32,16 @@ export default function TrafficData() {
   ]);
 
   const handleRefresh = (source) => {
-    console.log('Refreshing:', source);
+    setDataSources(prev => prev.map(s => 
+      s.id === source.id ? { ...s, lastUpdated: 'Just now', status: 'connected' } : s
+    ));
   };
 
   const handleSettings = (source) => {
-    console.log('Settings for:', source);
+    // Toggle connection status as a simple settings action
+    setDataSources(prev => prev.map(s => 
+      s.id === source.id ? { ...s, status: s.status === 'connected' ? 'disconnected' : 'connected' } : s
+    ));
   };
 
   const handleDelete = (source) => {
@@ -70,7 +75,16 @@ export default function TrafficData() {
             <h1 className="text-3xl font-bold text-slate-900">Traffic Data Management</h1>
             <p className="text-slate-600">Manage data sources and import traffic data</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+            const id = Date.now();
+            setDataSources(prev => [...prev, {
+              id,
+              name: `New Data Source ${prev.length + 1}`,
+              type: 'Manual Import',
+              status: 'disconnected',
+              lastUpdated: 'Never'
+            }]);
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Add Data Source
           </Button>
