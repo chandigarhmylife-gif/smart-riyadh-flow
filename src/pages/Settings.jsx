@@ -269,17 +269,17 @@ export default function Settings() {
         </Card>
 
         {/* Account Management */}
-        <Card className="border-2 border-red-200 bg-red-50/30">
+        <Card className="border-2 border-slate-200">
           <CardHeader>
-            <CardTitle className="text-red-700">Danger Zone</CardTitle>
+            <CardTitle>Account</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-slate-900">Delete Account</p>
-                <p className="text-sm text-slate-600">Permanently delete your account and all data</p>
+                <p className="font-medium text-slate-900">Log Out</p>
+                <p className="text-sm text-slate-600">Sign out of your account</p>
               </div>
-              <Button variant="destructive">Delete Account</Button>
+              <Button variant="outline" onClick={() => base44.auth.logout()}>Log Out</Button>
             </div>
           </CardContent>
         </Card>
