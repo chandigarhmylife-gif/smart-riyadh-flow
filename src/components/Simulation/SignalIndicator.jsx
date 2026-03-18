@@ -3,22 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Circle } from 'lucide-react';
 
 export default function SignalIndicator({ signalStates = {}, timings = {} }) {
-  const defaultStates = {
-    north: 'green',
-    south: 'green',
-    east: 'red',
-    west: 'red'
+  const displayStates = Object.keys(signalStates).length > 0 ? signalStates : {
+    north: 'green', south: 'green', east: 'red', west: 'red'
   };
-
-  const defaultTimings = {
-    north: 28,
-    south: 28,
-    east: 15,
-    west: 15
+  const displayTimings = Object.keys(timings).length > 0 ? timings : {
+    north: 0, south: 0, east: 0, west: 0
   };
-
-  const displayStates = Object.keys(signalStates).length > 0 ? signalStates : defaultStates;
-  const displayTimings = Object.keys(timings).length > 0 ? timings : defaultTimings;
 
   const getStateColor = (state) => {
     if (state === 'green') return 'text-green-500';
@@ -69,7 +59,11 @@ export default function SignalIndicator({ signalStates = {}, timings = {} }) {
 
         {/* Cycle Info */}
         <div className="pt-3 border-t border-slate-200 text-center text-sm text-slate-600">
-          <div className="font-medium">Current Cycle: Phase 1</div>
+          <div className="font-medium">
+            {displayStates.north === 'green' || displayStates.north === 'yellow' 
+              ? 'Phase 1 (N-S Active)' 
+              : 'Phase 2 (E-W Active)'}
+          </div>
           <div className="text-xs">Adaptive timing active</div>
         </div>
       </CardContent>
