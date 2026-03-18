@@ -112,14 +112,17 @@ export default function Settings() {
                 <Label>Theme</Label>
                 <p className="text-sm text-slate-600">Choose your interface theme</p>
               </div>
-              <Select value={theme} onValueChange={setTheme}>
+              <Select value={theme} onValueChange={(val) => {
+                setTheme(val);
+                if (val === 'dark') document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+              }}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Light</SelectItem>
                   <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="auto">Auto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
