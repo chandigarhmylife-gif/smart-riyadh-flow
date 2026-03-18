@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Leaf, TrendingDown, Factory, Fuel, Wind, Calendar, Download } from 'lucide-react';
+import { Leaf, TrendingDown, Factory, Fuel, Wind, Download } from 'lucide-react';
 
 export default function EmissionAnalytics() {
   const emissionData = [
@@ -51,7 +50,16 @@ export default function EmissionAnalytics() {
             <h1 className="text-3xl font-bold text-slate-900">Emission Analytics</h1>
             <p className="text-slate-600">Environmental impact and carbon footprint analysis</p>
           </div>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
+            const report = { emissionData, comparisonData, vehicleEmissions, hourlyData, totalReduction, reductionPercentage };
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `emission_report_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </Button>
