@@ -28,13 +28,7 @@ export default function QuickActions() {
       color: 'from-green-500 to-green-700',
       path: 'TrafficData'
     },
-    {
-      label: 'View Analytics',
-      description: 'Performance metrics',
-      icon: BarChart3,
-      color: 'from-orange-500 to-orange-700',
-      path: 'Analytics'
-    },
+
     {
       label: 'Generate Report',
       description: 'Create detailed report',
