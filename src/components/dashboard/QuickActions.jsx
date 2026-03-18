@@ -48,6 +48,34 @@ export default function QuickActions() {
       icon: Settings,
       color: 'from-slate-500 to-slate-700',
       path: 'Settings'
+    },
+    {
+      label: 'Alert Management',
+      description: 'Manage system alerts',
+      icon: AlertTriangle,
+      color: 'from-red-500 to-red-700',
+      path: 'AlertManagement'
+    },
+    {
+      label: 'Device Management',
+      description: 'Manage traffic devices',
+      icon: Monitor,
+      color: 'from-cyan-500 to-cyan-700',
+      path: 'DeviceManagement'
+    },
+    {
+      label: 'Incident Management',
+      description: 'Track & resolve incidents',
+      icon: Zap,
+      color: 'from-yellow-500 to-yellow-700',
+      path: 'IncidentManagement'
+    },
+    {
+      label: 'Model Management',
+      description: 'Manage AI models',
+      icon: Brain,
+      color: 'from-pink-500 to-pink-700',
+      path: 'ModelManagement'
     }
   ];
 
