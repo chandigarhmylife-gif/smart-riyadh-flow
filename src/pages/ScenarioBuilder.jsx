@@ -57,9 +57,9 @@ export default function ScenarioBuilder() {
   }, []);
 
   const loadScenario = async (id) => {
-    const scenarios = await base44.entities.TrafficScenario.filter({ id });
-    if (scenarios.length > 0) {
-      const s = scenarios[0];
+    const scenarios = await base44.entities.TrafficScenario.list();
+    const s = scenarios.find(sc => String(sc.id) === String(id));
+    if (s) {
       setScenarioId(s.id);
       setScenarioName(s.name);
       setDescription(s.description || '');
