@@ -4,31 +4,15 @@ import { Brain, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function AIDecisions({ decisions = [] }) {
-  const defaultDecisions = [
+  const displayDecisions = decisions.length > 0 ? decisions : [
     {
-      id: 1,
-      timestamp: '14:23:45',
-      decision: 'Extended green phase for North-South',
-      reasoning: 'Detected higher vehicle density in northbound lane (12 vehicles). Extended phase by 8 seconds to improve throughput.',
-      confidence: 94
-    },
-    {
-      id: 2,
-      timestamp: '14:23:30',
-      decision: 'Reduced East-West timing',
-      reasoning: 'Low traffic detected in east-west direction (3 vehicles). Reduced phase to 15 seconds to optimize overall efficiency.',
-      confidence: 91
-    },
-    {
-      id: 3,
-      timestamp: '14:23:12',
-      decision: 'Maintained current phase',
-      reasoning: 'Balanced traffic distribution across all directions. No adjustment needed.',
-      confidence: 88
+      id: 0,
+      timestamp: '-',
+      decision: 'Waiting for simulation to start',
+      reasoning: 'AI decisions will appear here once the simulation begins running. The system evaluates traffic conditions every phase cycle.',
+      confidence: 0
     }
   ];
-
-  const displayDecisions = decisions.length > 0 ? decisions : defaultDecisions;
 
   const getConfidenceColor = (confidence) => {
     if (confidence >= 90) return 'bg-green-100 text-green-800 border-green-200';
