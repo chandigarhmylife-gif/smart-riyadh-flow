@@ -49,7 +49,6 @@
  */
 import APIConnections from './pages/APIConnections';
 import AlertManagement from './pages/AlertManagement';
-import Analytics from './pages/Analytics';
 import Dashboard from './pages/Dashboard';
 import DeviceManagement from './pages/DeviceManagement';
 import EmissionAnalytics from './pages/EmissionAnalytics';
