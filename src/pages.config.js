@@ -73,7 +73,6 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "APIConnections": APIConnections,
     "AlertManagement": AlertManagement,
-    "Analytics": Analytics,
     "Dashboard": Dashboard,
     "DeviceManagement": DeviceManagement,
     "EmissionAnalytics": EmissionAnalytics,
