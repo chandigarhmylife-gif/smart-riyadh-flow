@@ -96,23 +96,18 @@ function Intersection({ signalStates }) {
 }
 
 export default function TrafficCanvas({ vehicles = [], signalStates = {}, isRunning }) {
-  const defaultSignals = {
-    north: 'green',
-    south: 'green',
-    east: 'red',
-    west: 'red'
+  const displaySignals = Object.keys(signalStates).length > 0 ? signalStates : {
+    north: 'green', south: 'green', east: 'red', west: 'red'
   };
 
-  const displaySignals = Object.keys(signalStates).length > 0 ? signalStates : defaultSignals;
-  
-  const defaultVehicles = [
-    { id: 1, position: [0, 0.15, -5], color: '#3B82F6', direction: 'north', speed: isRunning ? 1 : 0 },
-    { id: 2, position: [0, 0.15, 3], color: '#EF4444', direction: 'south', speed: isRunning ? 1 : 0 },
-    { id: 3, position: [4, 0.15, 0], color: '#F59E0B', direction: 'west', speed: 0 },
-    { id: 4, position: [-6, 0.15, 0], color: '#10B981', direction: 'east', speed: 0 },
+  const fallbackVehicles = [
+    { id: 1, position: [0.6, 0.15, -5], color: '#3B82F6', direction: 'north', speed: isRunning ? 1 : 0 },
+    { id: 2, position: [-0.6, 0.15, 4], color: '#EF4444', direction: 'south', speed: isRunning ? 1 : 0 },
+    { id: 3, position: [4, 0.15, -0.6], color: '#F59E0B', direction: 'west', speed: isRunning && displaySignals.west === 'green' ? 1 : 0 },
+    { id: 4, position: [-5, 0.15, 0.6], color: '#10B981', direction: 'east', speed: isRunning && displaySignals.east === 'green' ? 1 : 0 },
   ];
 
-  const displayVehicles = vehicles.length > 0 ? vehicles : defaultVehicles;
+  const displayVehicles = vehicles.length > 0 ? vehicles : fallbackVehicles;
 
   return (
     <div className="w-full h-full bg-gradient-to-b from-sky-200 to-slate-100 rounded-xl overflow-hidden">
