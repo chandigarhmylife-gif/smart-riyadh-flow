@@ -5,11 +5,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { User, Bell, Eye, Key, Database, HelpCircle } from 'lucide-react';
+import { User, Bell, Eye, Key, Database, HelpCircle, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Settings() {
+  const { toast } = useToast();
   const [user, setUser] = useState(null);
+  const [organization, setOrganization] = useState('');
+  const [saving, setSaving] = useState(false);
   const [theme, setTheme] = useState('light');
   const [units, setUnits] = useState('metric');
   const [notifications, setNotifications] = useState({
@@ -23,6 +27,10 @@ export default function Settings() {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+        setOrganization(currentUser.organization || '');
+        if (currentUser.theme) setTheme(currentUser.theme);
+        if (currentUser.units) setUnits(currentUser.units);
+        if (currentUser.notifications) setNotifications(currentUser.notifications);
       } catch (error) {
         console.error('Error loading user:', error);
       }
@@ -31,7 +39,10 @@ export default function Settings() {
   }, []);
 
   const handleSaveProfile = async () => {
-    console.log('Saving profile...');
+    setSaving(true);
+    await base44.auth.updateMe({ organization, theme, units, notifications });
+    setSaving(false);
+    toast({ title: 'Settings saved', description: 'Your preferences have been updated.' });
   };
 
   return (
@@ -76,11 +87,13 @@ export default function Settings() {
               <Label htmlFor="organization">Organization</Label>
               <Input
                 id="organization"
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
                 placeholder="Your company or institution"
               />
             </div>
-            <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">
-              Save Changes
+            <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
+              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
             </Button>
           </CardContent>
         </Card>
