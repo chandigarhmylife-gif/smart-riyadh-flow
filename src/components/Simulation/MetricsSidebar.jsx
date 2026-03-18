@@ -3,40 +3,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Users, TrendingUp, Activity } from 'lucide-react';
 
 export default function MetricsSidebar({ metrics = {}, isRunning }) {
-  const defaultMetrics = {
-    avgWaitTime: 42,
-    throughput: 156,
-    queueLength: 8,
-    efficiency: 89
+  const displayMetrics = {
+    avgWaitTime: metrics.avgWaitTime || 0,
+    throughput: metrics.throughput || 0,
+    queueLength: metrics.queueLength || 0,
+    efficiency: metrics.efficiency || 0,
+    totalVehicles: metrics.totalVehicles || 0,
+    co2Saved: metrics.co2Saved || 0,
   };
-
-  const displayMetrics = Object.keys(metrics).length > 0 ? metrics : defaultMetrics;
 
   const metricCards = [
     {
       label: 'Avg Wait Time',
-      value: `${displayMetrics.avgWaitTime}s`,
+      value: `${Math.round(displayMetrics.avgWaitTime)}s`,
       icon: Clock,
       color: 'text-blue-600',
       bg: 'bg-blue-50'
     },
     {
       label: 'Throughput',
-      value: `${displayMetrics.throughput} veh/h`,
+      value: `${Math.round(displayMetrics.throughput)} veh/h`,
       icon: Activity,
       color: 'text-green-600',
       bg: 'bg-green-50'
     },
     {
       label: 'Queue Length',
-      value: displayMetrics.queueLength,
+      value: Math.round(displayMetrics.queueLength),
       icon: Users,
       color: 'text-orange-600',
       bg: 'bg-orange-50'
     },
     {
       label: 'Efficiency',
-      value: `${displayMetrics.efficiency}%`,
+      value: `${Math.round(displayMetrics.efficiency)}%`,
       icon: TrendingUp,
       color: 'text-purple-600',
       bg: 'bg-purple-50'
