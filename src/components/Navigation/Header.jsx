@@ -28,9 +28,6 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
             <Link to={createPageUrl('NetworkSimulation')}>
               <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Network</Button>
             </Link>
-            <Link to={createPageUrl('Analytics')}>
-              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Analytics</Button>
-            </Link>
             <Link to={createPageUrl('ScenarioHistory')}>
               <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">History</Button>
             </Link>
