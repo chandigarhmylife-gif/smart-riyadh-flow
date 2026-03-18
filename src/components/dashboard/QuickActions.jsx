@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Play, Upload, FolderOpen, FileText, BarChart3, Settings } from 'lucide-react';
+import { Play, Upload, FolderOpen, FileText, BarChart3, Settings, AlertTriangle, Monitor, Zap, Brain } from 'lucide-react';
 
 export default function QuickActions() {
   const actions = [
