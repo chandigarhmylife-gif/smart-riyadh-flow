@@ -59,7 +59,7 @@ export default function Reports() {
       .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim())
       .join(', ');
 
-    const prompt = `You are a senior traffic engineering consultant with 25+ years of experience working on smart city projects across the GCC. Generate an extremely detailed, professional, publication-quality traffic control performance report in Markdown format. This report must be comprehensive, data-rich, and suitable for presentation to a city council, transportation authority, or government ministry.
+    const prompt = `You are a senior traffic engineering consultant with 20+ years of experience. Generate a highly detailed, professional traffic control performance report in Markdown format. This report should be comprehensive enough to present to a city council or transportation authority.
 
 **Report Configuration:**
 - Report Type: ${selectedTemplate.name}
@@ -67,213 +67,68 @@ export default function Reports() {
 - Date Range: ${dateRange.start || 'January 1, 2026'} to ${dateRange.end || 'February 26, 2026'}
 - Selected Metrics: ${activeMetrics}
 - City: Riyadh, Saudi Arabia (Smart Riyadh Flow initiative)
-- Target Length: 15–20 pages (extremely detailed)
 
----
-
-# Required Sections — Write Each Section Fully and In Full Detail
+**Required Sections (be thorough and detailed in each):**
 
 ## 1. Title Page & Report Metadata
-Full title block: Report Title, Subtitle, Prepared By (Smart Riyadh Flow Analytics Division), Date, Version (v2.1), Classification (Confidential – Official Use Only), Distribution List.
+Include report title, date, version, prepared by, and classification.
 
-## 2. Table of Contents
-List all sections with page numbers.
+## 2. Executive Summary (3–4 paragraphs)
+High-level summary of findings, overall system performance, and top recommendations. Include headline statistics.
 
-## 3. Executive Summary (5–6 paragraphs)
-Comprehensive summary of the reporting period. Cover: system deployment status, headline KPI improvements, financial impact, environmental gains, and top 3 strategic recommendations. End with a strong value statement for leadership.
-Include a summary callout box with 4 headline statistics in bold.
+## 3. System Overview
+Describe the Smart Riyadh Flow adaptive signal control system, the intersections monitored, time period, and data sources used.
 
-## 4. Introduction & Background
-- Background on Riyadh's traffic challenges (population growth, vehicle density, Vision 2030)
-- History of the Smart Riyadh Flow project
-- Objectives of this report
-- Scope: 24 AI-controlled intersections, 312 sensors, 6 traffic corridors
-- Methodology: Data collection, AI model type, update frequency
+## 4. Key Performance Indicators (KPI) Dashboard
+A markdown table with the following columns: KPI | Baseline (Fixed-Time) | AI Adaptive Control | Improvement | Target
+Include at minimum: Average Wait Time, Vehicle Throughput, Signal Efficiency, Queue Length, Average Travel Speed, Fuel Consumption, CO₂ Emissions, Stop-and-Go Events.
+Use realistic Riyadh traffic data values.
 
-## 5. System Architecture Overview
-- Describe the AI adaptive signal control architecture
-- Sensor types and locations
-- Data pipeline (real-time feeds, edge computing, cloud analytics)
-- AI model: reinforcement learning + pattern recognition
-- System uptime and redundancy: 99.7% uptime
-- Integration with Riyadh Municipality emergency systems
+## 5. Detailed Metric Analysis
+For each selected metric (${activeMetrics}), provide:
+- Current values with breakdown by time of day (Morning Peak 7–9AM, Midday 11AM–1PM, Evening Peak 4–7PM, Off-Peak)
+- A markdown table of hourly or daily data
+- Trend analysis (improving/declining/stable)
+- Comparison to regional and international benchmarks
 
-## 6. Key Performance Indicators (KPI) Master Dashboard
-A comprehensive markdown table:
-| KPI | Baseline (Fixed-Time) | AI Adaptive | Improvement | Target | Status |
-Include at minimum 12 KPIs: Average Wait Time, Peak Wait Time, Off-Peak Wait Time, Vehicle Throughput, Signal Efficiency, Queue Length, Average Travel Speed, Fuel Consumption per 100km, CO₂ Emissions per day, Stop-and-Go Events per km, Travel Time Index, Level of Service (LOS) Grade.
-Use specific Riyadh data values.
+## 6. Traffic Flow Analysis
+- Intersection-level performance table (at least 5 intersections with names, volumes, LOS grade, wait time)
+- Peak hour factor analysis
+- Bottleneck identification with specific locations
+- Queue propagation impact
 
-## 7. Detailed Metric Analysis by Time Period
-For EACH selected metric (${activeMetrics}), write a full subsection:
-### 7.x [Metric Name]
-- Definition and significance
-- A full data table: Morning Peak (7–9AM) | Midday (11AM–1PM) | Afternoon (2–4PM) | Evening Peak (4–7PM) | Night (9PM–5AM)
-- Week-over-week trend (improving/stable/declining)
-- Statistical highlights (max, min, average, standard deviation)
-- Root cause notes for outliers
-- Comparison to GCC regional benchmarks and international best practices (e.g., Singapore, London, Dubai)
+## 7. AI Adaptive Control vs. Fixed-Time Control Comparison
+A detailed side-by-side comparison table covering: wait time, throughput, efficiency, emissions, fuel savings, travel time reliability.
+Include percentage improvements and annualized projections.
 
-## 8. 24-Hour Traffic Flow Profile
-A full hour-by-hour table (24 rows: 12AM through 11PM) showing:
-| Hour | AI Wait Time (s) | Fixed Wait Time (s) | Volume (veh/hr) | LOS Grade | AI Signal Phase |
-Identify and annotate the 3 peak congestion windows.
+## 8. Incident & Anomaly Log
+Table of notable traffic incidents, their duration, affected intersections, and system response.
 
-## 9. Intersection-Level Performance Analysis
-Full table for ALL 12 monitored intersections:
-| Intersection | Road 1 | Road 2 | LOS | AI Wait (s) | Fixed Wait (s) | Volume | Flow % | Status | AI Action Applied |
-Use real Riyadh street names.
-Follow with a paragraph analysis of the top 3 best-performing and worst-performing intersections with root cause analysis.
+## 9. Environmental Impact Assessment
+- CO₂ reduction estimates (tons/day, tons/year)
+- Fuel savings (liters/day, cost savings in SAR)
+- Noise pollution reduction estimate
+- Alignment with Saudi Vision 2030 sustainability goals
 
-## 10. AI Adaptive Control vs. Fixed-Time Control: Full Comparison
-Comprehensive side-by-side comparison:
-| Metric | Fixed-Time | AI Adaptive | Absolute Change | % Improvement | Annualized Impact |
-Cover at least 15 metrics.
-Include a subsection on signal phase analysis: green time utilization, cycle length optimization, coordination index.
+## 10. Recommendations
+At least 8 numbered, actionable recommendations with: priority level (High/Medium/Low), estimated impact, implementation timeline, and responsible department.
 
-## 11. Peak Hour Deep Dive
-### 11.1 Morning Peak (7:00 – 9:00 AM)
-- Volume distribution, wait time heatmap description, bottleneck locations
-- Table: Top 5 congested intersections during morning peak
-- AI actions taken, results
+## 11. Risk Assessment
+Table of risks: Risk | Likelihood | Impact | Mitigation Strategy
 
-### 11.2 Evening Peak (4:00 – 7:00 PM)
-- Same structure as morning peak
-- Special incidents or anomalies noted
+## 12. Next Steps & Implementation Roadmap
+Phased plan for the next 6 months with milestones.
 
-### 11.3 Peak Hour Factor (PHF) Analysis
-- PHF table by day of week
-- Comparison to Riyadh seasonal norms
+## 13. Conclusion
+Strong closing paragraph summarizing value delivered and path forward.
 
-## 12. Bottleneck & Queue Propagation Analysis
-- Identify and rank the top 7 bottleneck locations
-- For each: location, direction, trigger, queue length (AI vs fixed), propagation distance, clearance time, AI intervention
-- Table format
-- Analysis of secondary congestion caused by each bottleneck
-
-## 13. Traffic Incident & Anomaly Log
-Full log table for the reporting period:
-| Date | Time | Location | Type | Severity | Duration | Vehicles Affected | AI System Response | Outcome |
-Include at least 8 incidents. Types: Congestion, Stall, Accident, Emergency Vehicle, Pedestrian Event, Signal Fault.
-Follow with incident analysis: frequency by type, response time averages, AI effectiveness rating.
-
-## 14. Environmental Impact Assessment
-### 14.1 Carbon Emissions Analysis
-- CO₂ reduced per day/month/year (in metric tons)
-- Comparison to fixed-time baseline
-- Equivalences: trees planted, passenger flights, homes powered
-
-### 14.2 Fuel Savings
-- Liters saved per day and year
-- Cost savings in SAR and USD
-- Breakdown by vehicle type (passenger cars, SUVs, buses, trucks)
-
-### 14.3 Air Quality Impact
-- NOx, PM2.5, and VOC reduction estimates
-- Urban air quality index improvement
-- Health cost savings (estimated SAR)
-
-### 14.4 Noise Pollution
-- Average dB reduction from fewer stop-and-go events
-- Affected residential zones
-
-### 14.5 Saudi Vision 2030 Alignment
-Table: | Vision 2030 Target | Current Status | Contribution from Smart Riyadh Flow | Progress |
-Include at least 6 targets.
-
-## 15. Financial & Economic Impact Analysis
-### 15.1 Cost Savings Summary
-- Fuel cost savings
-- Commuter time value (SAR per hour × hours saved)
-- Accident cost reduction
-- Infrastructure wear reduction
-
-### 15.2 ROI Model
-| Year | Investment (SAR M) | Annual Savings (SAR M) | Cumulative Net (SAR M) |
-Show 5-year projection. State break-even year.
-
-### 15.3 Cost per Intersection
-- CAPEX and OPEX per signal unit
-- Comparison to international costs
-
-## 16. Public Transit & Emergency Services Impact
-- Bus corridor improvements: route time savings, reliability index
-- Emergency vehicle preemption: count, average clearance time, lives impacted
-- Pedestrian crossing optimization: crossing time, safety improvement
-
-## 17. AI Model Performance & System Health
-- Model accuracy: prediction vs actual (96.4%)
-- False positive / false negative rates for congestion detection
-- System uptime log
-- Sensor health and data completeness
-- Data latency metrics (target: <1.2s, achieved: 0.9s avg)
-- Model retraining schedule and updates
-
-## 18. Stakeholder Impact Assessment
-- Commuters: time saved, reliability improvement
-- Businesses: delivery efficiency, customer access
-- Municipality: reduced maintenance, complaints down
-- Emergency services: faster response
-- Environment: sustainability progress
-- Vision 2030: KPIs contributed to
-
-## 19. Benchmarking Against Global Standards
-Table:
-| Metric | Riyadh (AI) | Dubai ATMS | Singapore iTMS | London SCOOT | Best in Class |
-Compare at least 8 metrics.
-Add a paragraph on what Riyadh can learn from global leaders and where it excels.
-
-## 20. Risk Register
-Full risk table:
-| Risk ID | Risk Description | Category | Likelihood | Impact | Risk Score | Mitigation Strategy | Owner | Status |
-Include at least 10 risks across: technical, operational, financial, environmental, and regulatory categories.
-
-## 21. Strategic Recommendations
-Provide 12 numbered recommendations, each with:
-- Priority: High / Medium / Low
-- Description (2–3 sentences)
-- Expected Impact
-- Timeline
-- Responsible Department
-- Estimated Cost
-
-## 22. 12-Month Implementation Roadmap
-A phased plan:
-### Phase 1 (Months 1–3): Consolidation
-### Phase 2 (Months 4–6): Expansion
-### Phase 3 (Months 7–9): Optimization
-### Phase 4 (Months 10–12): Full Scale
-Each phase: goals, milestones, deliverables, KPIs, budget.
-
-## 23. Data Methodology & Quality Notes
-- Data sources (loop detectors, cameras, GPS probes, weather API)
-- Data completeness rate: 98.7%
-- Quality control processes
-- Known limitations and caveats
-- Statistical confidence levels
-
-## 24. Glossary of Terms
-Define at least 15 technical terms used in the report.
-
-## 25. Conclusion
-A full, powerful closing section (4–5 paragraphs) summarizing:
-- Achievements in the reporting period
-- Transformational impact of AI traffic control
-- Commitment to Vision 2030
-- Call to action for leadership
-End with a bold headline statement of value delivered.
-
----
-
-**Mandatory Style Requirements:**
-- Use specific, exact numbers throughout (never vague ranges — always exact values)
-- Every section must include at least one markdown table
-- Use **bold** for all key statistics and critical findings
-- Use > blockquotes for important executive callouts
-- Be specific about Riyadh intersections, roads, and districts (King Fahd Rd, Olaya St, Tahlia St, Northern Ring Rd, Makkah Rd, Prince Sultan Rd, KAFD, Al-Malaz, Diplomatic Quarter, etc.)
-- Write in formal, technical English suitable for government publication
-- This report MUST be extremely long and detailed — do not summarize or shorten any section
-- Every table must have at least 5 rows of data`;
+**Style requirements:**
+- Use realistic, specific numbers throughout (not ranges — pick exact values)
+- Include markdown tables wherever data is presented
+- Use **bold** for key statistics and findings
+- Use > blockquotes for important callouts
+- Be specific about Riyadh intersections (e.g., King Fahd Road / Olaya Street, King Abdullah Road / Tahlia Street)
+- Minimum length: very thorough and comprehensive`;
 
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     setGeneratedReport({
