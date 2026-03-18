@@ -69,7 +69,6 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
               { label: 'Dashboard', page: 'Dashboard' },
               { label: 'Simulation', page: 'Simulation' },
               { label: 'Network', page: 'NetworkSimulation' },
-              { label: 'Analytics', page: 'Analytics' },
               { label: 'History', page: 'ScenarioHistory' },
               { label: 'Real-Time', page: 'RealTimeNetwork' },
               { label: 'API', page: 'APIConnections' },
