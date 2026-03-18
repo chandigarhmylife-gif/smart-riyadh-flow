@@ -2,17 +2,23 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, MoreVertical, Clock } from 'lucide-react';
+import { Play, Clock, FolderOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import moment from 'moment';
+
+const statusColors = {
+  draft: 'bg-slate-100 text-slate-700',
+  ready: 'bg-blue-100 text-blue-700',
+  running: 'bg-orange-100 text-orange-700',
+  completed: 'bg-green-100 text-green-700',
+};
 
 export default function RecentScenarios({ scenarios = [], loading = false }) {
   if (loading) {
     return (
       <Card className="border-2 border-slate-200">
-        <CardHeader>
-          <CardTitle>Recent Scenarios</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Recent Scenarios</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
@@ -23,35 +29,6 @@ export default function RecentScenarios({ scenarios = [], loading = false }) {
       </Card>
     );
   }
-
-  const defaultScenarios = [
-    {
-      id: 1,
-      name: 'Downtown Rush Hour',
-      intersection: '4-way Main & 1st',
-      lastRun: '2 hours ago',
-      status: 'completed',
-      efficiency: 87
-    },
-    {
-      id: 2,
-      name: 'School Zone Morning',
-      intersection: '3-way Oak & Maple',
-      lastRun: '5 hours ago',
-      status: 'completed',
-      efficiency: 92
-    },
-    {
-      id: 3,
-      name: 'Evening Commute',
-      intersection: '4-way Highway & Central',
-      lastRun: '1 day ago',
-      status: 'completed',
-      efficiency: 84
-    }
-  ];
-
-  const displayScenarios = scenarios.length > 0 ? scenarios : defaultScenarios;
 
   return (
     <Card className="border-2 border-slate-200">
@@ -64,51 +41,62 @@ export default function RecentScenarios({ scenarios = [], loading = false }) {
         </Link>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {displayScenarios.map(scenario => (
-            <div 
-              key={scenario.id}
-              className="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all group cursor-pointer"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="font-semibold text-slate-900">{scenario.name}</h4>
-                    <Badge variant="outline" className="text-xs">
-                      {scenario.intersection}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-4 text-sm text-slate-600">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{scenario.lastRun}</span>
+        {scenarios.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-30" />
+            <p>No scenarios yet. Create one to get started.</p>
+            <Link to={createPageUrl('ScenarioBuilder')}>
+              <Button size="sm" className="mt-3 bg-blue-600 hover:bg-blue-700">Create Scenario</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {scenarios.map(scenario => {
+              const efficiency = scenario.results?.efficiency;
+              return (
+                <div 
+                  key={scenario.id}
+                  className="p-4 border-2 border-slate-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all group cursor-pointer"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-semibold text-slate-900">{scenario.name}</h4>
+                        <Badge className={`text-xs ${statusColors[scenario.status] || 'bg-slate-100 text-slate-700'}`}>
+                          {scenario.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{moment(scenario.updated_date).fromNow()}</span>
+                        </div>
+                        <span>{(scenario.intersections || []).length} intersections</span>
+                        {efficiency != null && (
+                          <div className="flex items-center space-x-1">
+                            <span className="font-medium">Efficiency:</span>
+                            <span className={efficiency >= 85 ? 'text-green-600' : 'text-yellow-600'}>
+                              {Math.round(efficiency)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="font-medium">Efficiency:</span>
-                      <span className={scenario.efficiency >= 85 ? 'text-green-600' : 'text-yellow-600'}>
-                        {scenario.efficiency}%
-                      </span>
-                    </div>
+                    <Link to={`/Simulation?scenario=${scenario.id}`}>
+                      <Button 
+                        size="sm" 
+                        className="bg-blue-600 hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Run
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Link to={createPageUrl('Simulation')}>
-                    <Button 
-                      size="sm" 
-                      className="bg-blue-600 hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Play className="w-4 h-4 mr-1" />
-                      Run
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
