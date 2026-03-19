@@ -8,7 +8,7 @@ export default function EmergencyPriority({ onEmergencyTrigger }) {
   const [activeEmergencies, setActiveEmergencies] = useState([]);
 
   const triggerEmergency = () => {
-    const emergency = {
+    const emergency = onEmergencyTrigger ? onEmergencyTrigger() : {
       id: Date.now(),
       type: 'ambulance',
       direction: ['North', 'South', 'East', 'West'][Math.floor(Math.random() * 4)],
@@ -16,17 +16,16 @@ export default function EmergencyPriority({ onEmergencyTrigger }) {
       timestamp: new Date().toLocaleTimeString()
     };
 
-    setActiveEmergencies([...activeEmergencies, emergency]);
-    if (onEmergencyTrigger) onEmergencyTrigger(emergency);
-
-    // Auto-remove after ETA
-    setTimeout(() => {
-      setActiveEmergencies(prev => prev.filter(e => e.id !== emergency.id));
-    }, emergency.eta * 1000);
+    if (emergency) {
+      setActiveEmergencies(prev => [...prev, emergency]);
+      setTimeout(() => {
+        setActiveEmergencies(prev => prev.filter(e => e.id !== emergency.id));
+      }, emergency.eta * 1000);
+    }
   };
 
   const clearEmergency = (id) => {
-    setActiveEmergencies(activeEmergencies.filter(e => e.id !== id));
+    setActiveEmergencies(prev => prev.filter(e => e.id !== id));
   };
 
   return (
