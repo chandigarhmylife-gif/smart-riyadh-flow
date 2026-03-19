@@ -21,13 +21,11 @@ export default function SimulationHeader({ isRunning, speed, elapsedTime, emerge
         <p className="text-slate-600">Coordinated traffic signal management across multiple intersections</p>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Timer */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-lg text-sm font-mono text-slate-700">
           <Clock className="w-4 h-4" />
           {formatTime(elapsedTime)}
         </div>
 
-        {/* Speed control */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
           <FastForward className="w-4 h-4 text-slate-500" />
           <Slider value={[speed]} onValueChange={([v]) => onSpeedChange(v)}
@@ -41,7 +39,6 @@ export default function SimulationHeader({ isRunning, speed, elapsedTime, emerge
           </Badge>
         )}
 
-        {/* Playback controls */}
         {!isRunning ? (
           <Button onClick={onPlay} className="bg-green-600 hover:bg-green-700">
             <Play className="w-4 h-4 mr-1" /> Start

@@ -1,12 +1,6 @@
 import React from 'react';
 
 export default function NetworkStatsBar({ metrics, elapsedTime, emergencyCount }) {
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  };
-
   const stats = [
     { label: 'Network Efficiency', value: `${metrics.efficiency}%`, sub: 'Across all intersections', gradient: 'from-blue-500 to-blue-600' },
     { label: 'Synchronized Signals', value: `${metrics.synchronized}/${metrics.total}`, sub: 'Active coordination', gradient: 'from-green-500 to-green-600' },
