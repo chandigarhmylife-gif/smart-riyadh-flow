@@ -55,7 +55,7 @@ import EmissionAnalytics from './pages/EmissionAnalytics';
 import IncidentManagement from './pages/IncidentManagement';
 import Landing from './pages/Landing';
 import ModelManagement from './pages/ModelManagement';
-import NetworkSimulation from './pages/NetworkSimulation';
+import NetworkSimulation from './pages/NetworkSimulation.jsx';
 import PerformanceBaselines from './pages/PerformanceBaselines';
 import PublicDisplay from './pages/PublicDisplay';
 import RealTimeNetwork from './pages/RealTimeNetwork';
