@@ -47,7 +47,6 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import APIConnections from './pages/APIConnections';
 import AlertManagement from './pages/AlertManagement';
 import Dashboard from './pages/Dashboard';
 import DeviceManagement from './pages/DeviceManagement';
@@ -71,7 +70,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "APIConnections": APIConnections,
     "AlertManagement": AlertManagement,
     "Dashboard": Dashboard,
     "DeviceManagement": DeviceManagement,

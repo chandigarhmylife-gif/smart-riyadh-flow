@@ -34,9 +34,6 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
             <Link to={createPageUrl('RealTimeNetwork')}>
               <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Real-Time</Button>
             </Link>
-            <Link to={createPageUrl('APIConnections')}>
-              <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">API</Button>
-            </Link>
             <Link to={createPageUrl('ScenarioBuilder')}>
               <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50">Builder</Button>
             </Link>
@@ -71,7 +68,6 @@ export default function Header({ user, onMobileMenuToggle, isMobileMenuOpen }) {
               { label: 'Network', page: 'NetworkSimulation' },
               { label: 'History', page: 'ScenarioHistory' },
               { label: 'Real-Time', page: 'RealTimeNetwork' },
-              { label: 'API', page: 'APIConnections' },
               { label: 'Builder', page: 'ScenarioBuilder' },
               { label: 'Incidents', page: 'IncidentManagement' },
               { label: 'Devices', page: 'DeviceManagement' },
