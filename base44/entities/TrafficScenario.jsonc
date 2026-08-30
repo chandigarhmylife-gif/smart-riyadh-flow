@@ -1,0 +1,91 @@
+{
+  "name": "TrafficScenario",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the traffic scenario"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the scenario"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "running",
+        "completed"
+      ],
+      "default": "draft",
+      "description": "Current status of the scenario"
+    },
+    "intersections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "lanes": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "List of intersections in the network"
+    },
+    "vehicle_flows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "from": {
+            "type": "number"
+          },
+          "to": {
+            "type": "number"
+          },
+          "volume": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Traffic flows between intersections"
+    },
+    "config": {
+      "type": "object",
+      "description": "Simulation configuration settings"
+    },
+    "vehicle_distribution": {
+      "type": "object",
+      "description": "Vehicle type distribution percentages"
+    },
+    "results": {
+      "type": "object",
+      "description": "Simulation results after a run"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
