@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-
-const PHASE_CONFIGS = [
-  { north: 'green', south: 'green', east: 'red', west: 'red', duration: 30 },
-  { north: 'yellow', south: 'yellow', east: 'red', west: 'red', duration: 4 },
-  { north: 'red', south: 'red', east: 'green', west: 'green', duration: 25 },
-  { north: 'red', south: 'red', east: 'yellow', west: 'yellow', duration: 4 },
-];
+import {
+  PHASE_CONFIGS,
+  initialSignalState,
+  tickSignal,
+  signalStatesFor,
+  isGreenPhase,
+  approachTimings,
+} from '@/lib/signalTiming';
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min);
@@ -54,6 +55,9 @@ export default function useSimulationEngine(config = {}) {
 
   const intervalRef = useRef(null);
   const decisionIdRef = useRef(0);
+  const signalRef = useRef(initialSignalState());
+  const emergencyRef = useRef(false);
+  const emergencyTimeoutRef = useRef(null);
 
   const duration = config.duration || 60; // minutes
 
@@ -74,44 +78,33 @@ export default function useSimulationEngine(config = {}) {
         return next;
       });
 
-      // Phase cycling
-      setPhaseTimer(prev => {
-        if (prev <= 1) {
-          setPhase(p => {
-            const nextPhase = (p + 1) % PHASE_CONFIGS.length;
-            const nextConfig = PHASE_CONFIGS[nextPhase];
-            setSignalStates({
-              north: nextConfig.north,
-              south: nextConfig.south,
-              east: nextConfig.east,
-              west: nextConfig.west,
-            });
-
-            // AI decision on phase change to green
-            if (nextConfig.north === 'green' || nextConfig.east === 'green') {
-              decisionIdRef.current += 1;
-              const now = new Date();
-              const ts = now.toLocaleTimeString();
-              const isNS = nextConfig.north === 'green';
-              setAiDecisions(prev => [{
-                id: decisionIdRef.current,
-                timestamp: ts,
-                decision: isNS
-                  ? 'Activated North-South green phase'
-                  : 'Activated East-West green phase',
-                reasoning: isNS
-                  ? `Detected ${Math.floor(randomBetween(8, 18))} vehicles queued in N-S direction. Extended phase to ${nextConfig.duration}s for optimal clearance.`
-                  : `E-W queue building (${Math.floor(randomBetween(5, 14))} vehicles). Switching to clear cross-traffic and reduce wait times.`,
-                confidence: Math.floor(randomBetween(85, 98)),
-              }, ...prev].slice(0, 20));
-            }
-
-            return nextPhase;
-          });
-          return PHASE_CONFIGS[(phase + 1) % PHASE_CONFIGS.length].duration;
+      // Phase cycling. The signal plan lives in a ref so one tick advances it
+      // exactly once (no setState calls nested inside other updaters).
+      const next = tickSignal(signalRef.current);
+      signalRef.current = { phase: next.phase, phaseTimer: next.phaseTimer };
+      setPhaseTimer(next.phaseTimer);
+      if (next.changed) {
+        setPhase(next.phase);
+        if (!emergencyRef.current) {
+          setSignalStates(signalStatesFor(next.phase));
         }
-        return prev - 1;
-      });
+        if (isGreenPhase(next.phase)) {
+          decisionIdRef.current += 1;
+          const isNS = PHASE_CONFIGS[next.phase].north === 'green';
+          const decision = {
+            id: decisionIdRef.current,
+            timestamp: new Date().toLocaleTimeString(),
+            decision: isNS
+              ? 'Activated North-South green phase'
+              : 'Activated East-West green phase',
+            reasoning: isNS
+              ? `Detected ${Math.floor(randomBetween(8, 18))} vehicles queued in N-S direction. Extended phase to ${PHASE_CONFIGS[next.phase].duration}s for optimal clearance.`
+              : `E-W queue building (${Math.floor(randomBetween(5, 14))} vehicles). Switching to clear cross-traffic and reduce wait times.`,
+            confidence: Math.floor(randomBetween(85, 98)),
+          };
+          setAiDecisions(prev => [decision, ...prev].slice(0, 20));
+        }
+      }
 
       // Update metrics with realistic fluctuation
       setMetrics(prev => {
@@ -135,7 +128,7 @@ export default function useSimulationEngine(config = {}) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, speed, phase, duration]);
+  }, [isRunning, speed, duration]);
 
   // Update vehicles whenever signals or running state changes
   useEffect(() => {
@@ -163,9 +156,12 @@ export default function useSimulationEngine(config = {}) {
   const reset = useCallback(() => {
     setIsRunning(false);
     setElapsedSeconds(0);
+    signalRef.current = initialSignalState();
+    emergencyRef.current = false;
+    if (emergencyTimeoutRef.current) clearTimeout(emergencyTimeoutRef.current);
     setPhase(0);
     setPhaseTimer(PHASE_CONFIGS[0].duration);
-    setSignalStates({ north: 'green', south: 'green', east: 'red', west: 'red' });
+    setSignalStates(signalStatesFor(0));
     setMetrics({ avgWaitTime: 0, throughput: 0, queueLength: 0, efficiency: 0, totalVehicles: 0, co2Saved: 0 });
     setVehicles([]);
     setAiDecisions([]);
@@ -173,6 +169,7 @@ export default function useSimulationEngine(config = {}) {
   }, []);
 
   const triggerEmergency = useCallback((direction) => {
+    emergencyRef.current = true;
     setEmergencyActive(true);
     // Force green in emergency direction
     const dirs = { north: 'red', south: 'red', east: 'red', west: 'red' };
@@ -191,18 +188,16 @@ export default function useSimulationEngine(config = {}) {
       confidence: 99,
     }, ...prev].slice(0, 20));
 
-    // Restore after 15 seconds
-    setTimeout(() => {
+    // Restore the normal plan after 15 seconds
+    if (emergencyTimeoutRef.current) clearTimeout(emergencyTimeoutRef.current);
+    emergencyTimeoutRef.current = setTimeout(() => {
+      emergencyRef.current = false;
       setEmergencyActive(false);
+      setSignalStates(signalStatesFor(signalRef.current.phase));
     }, 15000);
   }, []);
 
-  const timings = {
-    north: signalStates.north === 'green' || signalStates.north === 'yellow' ? phaseTimer : 0,
-    south: signalStates.south === 'green' || signalStates.south === 'yellow' ? phaseTimer : 0,
-    east: signalStates.east === 'green' || signalStates.east === 'yellow' ? phaseTimer : 0,
-    west: signalStates.west === 'green' || signalStates.west === 'yellow' ? phaseTimer : 0,
-  };
+  const timings = approachTimings(signalStates, phaseTimer);
 
   const currentPhaseLabel = phase < 2 ? 'Phase 1 (N-S)' : 'Phase 2 (E-W)';
 
