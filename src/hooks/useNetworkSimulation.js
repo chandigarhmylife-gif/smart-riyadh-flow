@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const DEFAULT_INTERSECTIONS = [
-  { id: 1, name: 'Main & 1st', status: 'active', coordination: 'synchronized', efficiency: 85, signalState: 'green', position: { x: 120, y: 80 }, mapPos: [37.7749, -122.4194], waitTime: 32, throughput: 180, queueLength: 4 },
-  { id: 2, name: 'Main & 2nd', status: 'active', coordination: 'synchronized', efficiency: 82, signalState: 'red', position: { x: 350, y: 80 }, mapPos: [37.7759, -122.4204], waitTime: 38, throughput: 160, queueLength: 6 },
-  { id: 3, name: '1st & Oak', status: 'active', coordination: 'independent', efficiency: 74, signalState: 'green', position: { x: 120, y: 220 }, mapPos: [37.7739, -122.4184], waitTime: 45, throughput: 140, queueLength: 8 },
-  { id: 4, name: '2nd & Oak', status: 'active', coordination: 'synchronized', efficiency: 80, signalState: 'yellow', position: { x: 350, y: 220 }, mapPos: [37.7749, -122.4214], waitTime: 36, throughput: 155, queueLength: 5 },
+  { id: 1, name: 'King Fahd / Al Urubah', status: 'active', coordination: 'synchronized', efficiency: 85, signalState: 'green', position: { x: 120, y: 80 }, mapPos: [24.7112, 46.6741], waitTime: 32, throughput: 180, queueLength: 4 },
+  { id: 2, name: 'Olaya / Al Urubah', status: 'active', coordination: 'synchronized', efficiency: 82, signalState: 'red', position: { x: 350, y: 80 }, mapPos: [24.7128, 46.6788], waitTime: 38, throughput: 160, queueLength: 6 },
+  { id: 3, name: 'King Fahd / Tahlia', status: 'active', coordination: 'independent', efficiency: 74, signalState: 'green', position: { x: 120, y: 220 }, mapPos: [24.6993, 46.6806], waitTime: 45, throughput: 140, queueLength: 8 },
+  { id: 4, name: 'Olaya / Tahlia', status: 'active', coordination: 'synchronized', efficiency: 80, signalState: 'yellow', position: { x: 350, y: 220 }, mapPos: [24.7009, 46.6852], waitTime: 36, throughput: 155, queueLength: 5 },
 ];
 
 const SIGNAL_CYCLE = ['green', 'yellow', 'red', 'red'];
@@ -154,7 +154,7 @@ export default function useNetworkSimulation() {
       efficiency: 70 + Math.floor(Math.random() * 15),
       signalState: 'green',
       position: { x: 80 + Math.random() * 400, y: 60 + Math.random() * 200 },
-      mapPos: [37.7749 + (Math.random() - 0.5) * 0.01, -122.4194 + (Math.random() - 0.5) * 0.01],
+      mapPos: [24.7112 + (Math.random() - 0.5) * 0.01, 46.6741 + (Math.random() - 0.5) * 0.01],
       waitTime: 30 + Math.floor(Math.random() * 20),
       throughput: 120 + Math.floor(Math.random() * 60),
       queueLength: Math.floor(Math.random() * 10)
@@ -179,7 +179,7 @@ export default function useNetworkSimulation() {
   };
 
   const triggerEmergency = () => {
-    const centerMap = intersections[0]?.mapPos || [37.7749, -122.4194];
+    const centerMap = intersections[0]?.mapPos || [24.7112, 46.6741];
     const emergency = {
       id: Date.now(),
       type: ['ambulance', 'fire', 'police'][Math.floor(Math.random() * 3)],

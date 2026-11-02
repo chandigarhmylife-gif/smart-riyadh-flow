@@ -116,14 +116,14 @@ export default function Simulation() {
   const mapIntersections = (loadedScenario?.intersections || []).map((inter, i) => ({
     id: inter.id,
     name: inter.name,
-    position: [37.7749 + i * 0.001, -122.4194 + i * 0.001],
+    position: [24.7112 + i * 0.001, 46.6741 + i * 0.001],
     status: Object.values(signalStates)[i % 4],
   }));
   if (mapIntersections.length === 0) {
     mapIntersections.push(
-      { id: 1, name: 'Main & 1st', position: [37.7749, -122.4194], status: signalStates.north },
-      { id: 2, name: 'Main & 2nd', position: [37.7759, -122.4204], status: signalStates.south },
-      { id: 3, name: '1st & Oak', position: [37.7739, -122.4184], status: signalStates.east },
+      { id: 1, name: 'King Fahd / Al Urubah', position: [24.7112, 46.6741], status: signalStates.north },
+      { id: 2, name: 'Olaya / Al Urubah', position: [24.7128, 46.6788], status: signalStates.south },
+      { id: 3, name: 'King Fahd / Tahlia', position: [24.6993, 46.6806], status: signalStates.east },
     );
   }
 

@@ -10,7 +10,7 @@ export default function TrafficData() {
   const [dataSources, setDataSources] = useState([
     {
       id: 1,
-      name: 'Main Street Sensors',
+      name: 'King Fahd Road Sensors',
       type: 'Live API Feed',
       status: 'connected',
       lastUpdated: '2 minutes ago'

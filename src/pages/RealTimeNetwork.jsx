@@ -29,23 +29,23 @@ export default function RealTimeNetwork() {
   const [showVehicles, setShowVehicles] = useState(true);
 
   const [intersections] = useState([
-    { id: 1, name: 'Main & 1st', position: [37.7749, -122.4194], status: 'green', efficiency: 92, flow: 'high' },
-    { id: 2, name: 'Main & 2nd', position: [37.7759, -122.4204], status: 'red', efficiency: 87, flow: 'medium' },
-    { id: 3, name: 'Main & 3rd', position: [37.7769, -122.4214], status: 'green', efficiency: 94, flow: 'high' },
-    { id: 4, name: '1st & Oak', position: [37.7739, -122.4184], status: 'yellow', efficiency: 78, flow: 'low' },
-    { id: 5, name: '2nd & Oak', position: [37.7749, -122.4194], status: 'green', efficiency: 89, flow: 'medium' },
-    { id: 6, name: 'Main & 4th', position: [37.7779, -122.4224], status: 'red', efficiency: 85, flow: 'high' }
+    { id: 1, name: 'King Fahd / Al Urubah', position: [24.7112, 46.6741], status: 'green', efficiency: 92, flow: 'high' },
+    { id: 2, name: 'Olaya / Al Urubah', position: [24.7128, 46.6788], status: 'red', efficiency: 87, flow: 'medium' },
+    { id: 3, name: 'Olaya / Musa Bin Nusair', position: [24.7185, 46.6760], status: 'green', efficiency: 94, flow: 'high' },
+    { id: 4, name: 'King Fahd / Tahlia', position: [24.6993, 46.6806], status: 'yellow', efficiency: 78, flow: 'low' },
+    { id: 5, name: 'Olaya / Tahlia', position: [24.7009, 46.6852], status: 'green', efficiency: 89, flow: 'medium' },
+    { id: 6, name: 'King Fahd / Al Faisaliah', position: [24.6905, 46.6853], status: 'red', efficiency: 85, flow: 'high' }
   ]);
 
   const [incidents] = useState([
-    { id: 1, type: 'accident', position: [37.7754, -122.4199], severity: 'high', description: 'Multi-vehicle accident' },
-    { id: 2, type: 'construction', position: [37.7764, -122.4209], severity: 'medium', description: 'Road work in progress' }
+    { id: 1, type: 'accident', position: [24.7120, 46.6765], severity: 'high', description: 'Multi-vehicle accident' },
+    { id: 2, type: 'construction', position: [24.7060, 46.6795], severity: 'medium', description: 'Road work in progress' }
   ]);
 
   const [vehicles, setVehicles] = useState([
-    { id: 1, position: [37.7745, -122.4190], type: 'car' },
-    { id: 2, position: [37.7755, -122.4200], type: 'bus' },
-    { id: 3, position: [37.7765, -122.4210], type: 'emergency' }
+    { id: 1, position: [24.7105, 46.6750], type: 'car' },
+    { id: 2, position: [24.7125, 46.6775], type: 'bus' },
+    { id: 3, position: [24.7050, 46.6820], type: 'emergency' }
   ]);
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function RealTimeNetwork() {
               <CardContent className="p-0">
                 <div className="h-[600px] relative">
                   <MapContainer
-                    center={[37.7759, -122.4204]}
+                    center={[24.7128, 46.6788]}
                     zoom={14}
                     style={{ height: '100%', width: '100%' }}
                   >
@@ -205,11 +205,11 @@ export default function RealTimeNetwork() {
                     {showTrafficFlow && (
                       <>
                         <Polyline
-                          positions={[[37.7749, -122.4194], [37.7759, -122.4204], [37.7769, -122.4214]]}
+                          positions={[[24.7112, 46.6741], [24.7128, 46.6788], [24.7185, 46.6760]]}
                           pathOptions={{ color: '#10B981', weight: 4, opacity: 0.6 }}
                         />
                         <Polyline
-                          positions={[[37.7739, -122.4184], [37.7749, -122.4194], [37.7759, -122.4204]]}
+                          positions={[[24.6993, 46.6806], [24.7112, 46.6741], [24.7128, 46.6788]]}
                           pathOptions={{ color: '#F59E0B', weight: 4, opacity: 0.6 }}
                         />
                       </>

@@ -72,7 +72,7 @@ export default function TrafficMap({
   emergencyVehicles = [],
   incidents = [],
   isRunning = false,
-  center = [37.7749, -122.4194]
+  center = [24.7112, 46.6741]
 }) {
   const [localVehicles, setLocalVehicles] = useState(vehicles);
 
@@ -98,15 +98,15 @@ export default function TrafficMap({
   }, [isRunning, vehicles]);
 
   const defaultIntersections = intersections.length > 0 ? intersections : [
-    { id: 1, name: 'Main & 1st', position: [37.7749, -122.4194], status: 'green' },
-    { id: 2, name: 'Main & 2nd', position: [37.7759, -122.4204], status: 'red' },
-    { id: 3, name: '1st & Oak', position: [37.7739, -122.4184], status: 'green' }
+    { id: 1, name: 'King Fahd / Al Urubah', position: [24.7112, 46.6741], status: 'green' },
+    { id: 2, name: 'Olaya / Al Urubah', position: [24.7128, 46.6788], status: 'red' },
+    { id: 3, name: 'King Fahd / Tahlia', position: [24.6993, 46.6806], status: 'green' }
   ];
 
   const defaultVehicles = localVehicles.length > 0 ? localVehicles : [
-    { id: 1, position: [37.7754, -122.4189], direction: 'North', speed: 25, type: 'car' },
-    { id: 2, position: [37.7744, -122.4199], direction: 'South', speed: 30, type: 'car' },
-    { id: 3, position: [37.7749, -122.4209], direction: 'East', speed: 28, type: 'car' }
+    { id: 1, position: [24.7118, 46.6755], direction: 'North', speed: 25, type: 'car' },
+    { id: 2, position: [24.7050, 46.6773], direction: 'South', speed: 30, type: 'car' },
+    { id: 3, position: [24.7000, 46.6830], direction: 'East', speed: 28, type: 'car' }
   ];
 
   return (

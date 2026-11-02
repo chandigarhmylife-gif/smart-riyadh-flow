@@ -28,10 +28,10 @@ export default function PublicDisplay() {
   }, []);
 
   const intersectionStatus = [
-    { name: 'Main & 1st', status: 'optimal', flow: 'high' },
-    { name: 'Main & 2nd', status: 'good', flow: 'medium' },
-    { name: '2nd & Oak', status: 'optimal', flow: 'high' },
-    { name: 'Main & 3rd', status: 'moderate', flow: 'medium' }
+    { name: 'King Fahd / Al Urubah', status: 'optimal', flow: 'high' },
+    { name: 'Olaya / Al Urubah', status: 'good', flow: 'medium' },
+    { name: 'Olaya / Tahlia', status: 'optimal', flow: 'high' },
+    { name: 'Olaya / Musa Bin Nusair', status: 'moderate', flow: 'medium' }
   ];
 
   const getStatusColor = (status) => {

@@ -26,8 +26,8 @@ export default function IncidentManagement() {
       id: 1,
       type: 'accident',
       severity: 'high',
-      location: 'Main St & 5th Ave',
-      position: [37.7749, -122.4194],
+      location: 'King Fahd Rd & Tahlia St',
+      position: [24.7112, 46.6741],
       description: 'Multi-vehicle collision blocking 2 lanes',
       status: 'active',
       reportedAt: '10:45 AM',
@@ -38,8 +38,8 @@ export default function IncidentManagement() {
       id: 2,
       type: 'construction',
       severity: 'medium',
-      location: '2nd St & Oak Ave',
-      position: [37.7759, -122.4204],
+      location: 'Olaya St & Tahlia St',
+      position: [24.7128, 46.6788],
       description: 'Road resurfacing, single lane closure',
       status: 'active',
       reportedAt: '08:30 AM',
@@ -51,7 +51,7 @@ export default function IncidentManagement() {
       type: 'weather',
       severity: 'low',
       location: 'Highway 101 North',
-      position: [37.7769, -122.4214],
+      position: [24.7185, 46.6760],
       description: 'Heavy rain reducing visibility',
       status: 'monitoring',
       reportedAt: '09:15 AM',
@@ -73,7 +73,7 @@ export default function IncidentManagement() {
       ...newIncident,
       status: 'active',
       reportedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      position: [37.7749 + Math.random() * 0.005, -122.4194 + Math.random() * 0.005],
+      position: [24.7112 + Math.random() * 0.005, 46.6741 + Math.random() * 0.005],
       impact: 'Calculating impact...',
       responders: 'Pending dispatch'
     };
@@ -194,7 +194,7 @@ export default function IncidentManagement() {
               <div>
                 <Label>Location</Label>
                 <Input 
-                  placeholder="e.g., Main St & 5th Ave"
+                  placeholder="e.g., King Fahd Rd & Tahlia St"
                   value={newIncident.location}
                   onChange={(e) => setNewIncident({...newIncident, location: e.target.value})}
                 />
@@ -227,7 +227,7 @@ export default function IncidentManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[500px]">
-                <MapContainer center={[37.7759, -122.4204]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                <MapContainer center={[24.7128, 46.6788]} zoom={13} style={{ height: '100%', width: '100%' }}>
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   {incidents.filter(i => i.status !== 'resolved').map(incident => (
                     <Marker key={incident.id} position={incident.position}>
