@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { computeNetworkMetrics } from '@/lib/networkMetrics';
 
 const DEFAULT_INTERSECTIONS = [
   { id: 1, name: 'King Fahd / Al Urubah', status: 'active', coordination: 'synchronized', efficiency: 85, signalState: 'green', position: { x: 120, y: 80 }, mapPos: [24.7112, 46.6741], waitTime: 32, throughput: 180, queueLength: 4 },
@@ -26,16 +27,7 @@ export default function useNetworkSimulation() {
   const tickRef = useRef(0);
   const signalTimers = useRef({});
 
-  // Compute aggregate network metrics from intersections
-  const computeMetrics = useCallback((ints) => {
-    if (ints.length === 0) return { efficiency: 0, throughput: 0, waitTime: 0, synchronized: 0, total: 0 };
-    const active = ints.filter(i => i.status === 'active');
-    const synced = ints.filter(i => i.coordination === 'synchronized').length;
-    const avgEff = active.length > 0 ? Math.round(active.reduce((s, i) => s + i.efficiency, 0) / active.length) : 0;
-    const totalThroughput = active.reduce((s, i) => s + i.throughput, 0);
-    const avgWait = active.length > 0 ? Math.round(active.reduce((s, i) => s + i.waitTime, 0) / active.length) : 0;
-    return { efficiency: avgEff, throughput: totalThroughput, waitTime: avgWait, synchronized: synced, total: ints.length };
-  }, []);
+  const computeMetrics = useCallback((ints) => computeNetworkMetrics(ints), []);
 
   // Generate simulated vehicles on the map
   useEffect(() => {

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { FileText, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { parseCSV, validateJsonData, validateCsvData, cleanAndTransform } from '@/lib/trafficData';
 
 export default function FileProcessor({ file, onProcessComplete }) {
   const [processing, setProcessing] = useState(false);
@@ -57,72 +58,6 @@ export default function FileProcessor({ file, onProcessComplete }) {
     } finally {
       setProcessing(false);
     }
-  };
-
-  const parseCSV = (text) => {
-    const lines = text.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',').map(h => h.trim());
-    
-    return lines.slice(1).map(line => {
-      const values = line.split(',');
-      const obj = {};
-      headers.forEach((header, i) => {
-        obj[header] = values[i]?.trim() || '';
-      });
-      return obj;
-    });
-  };
-
-  const validateJsonData = (data) => {
-    const records = Array.isArray(data) ? data : [data];
-    const errors = [];
-    const warnings = [];
-    let validRecords = 0;
-
-    records.forEach((record, index) => {
-      if (!record.timestamp && !record.time) {
-        warnings.push(`Record ${index + 1}: Missing timestamp`);
-      }
-      if (!record.direction && !record.lane) {
-        warnings.push(`Record ${index + 1}: Missing direction/lane`);
-      }
-      if (!record.count && !record.vehicle_count) {
-        errors.push(`Record ${index + 1}: Missing vehicle count`);
-      } else {
-        validRecords++;
-      }
-    });
-
-    return { errors, warnings, totalRecords: records.length, validRecords };
-  };
-
-  const validateCsvData = (data) => {
-    const errors = [];
-    const warnings = [];
-    let validRecords = 0;
-
-    data.forEach((record, index) => {
-      const hasRequiredFields = record.timestamp || record.time;
-      if (!hasRequiredFields) {
-        errors.push(`Row ${index + 2}: Missing required timestamp field`);
-      } else {
-        validRecords++;
-      }
-    });
-
-    return { errors, warnings, totalRecords: data.length, validRecords };
-  };
-
-  const cleanAndTransform = (data) => {
-    const records = Array.isArray(data) ? data : [data];
-    
-    return records.map(record => ({
-      timestamp: record.timestamp || record.time || new Date().toISOString(),
-      direction: record.direction || record.lane || 'unknown',
-      vehicleCount: parseInt(record.count || record.vehicle_count || 0),
-      avgSpeed: parseFloat(record.speed || record.avg_speed || 0),
-      queueLength: parseInt(record.queue || record.queue_length || 0)
-    }));
   };
 
   return (
