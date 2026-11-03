@@ -61,13 +61,28 @@ export default function Simulation() {
   }, [selectedScenarioId, scenarios]);
 
   const scenarioConfig = loadedScenario?.config || {};
+  const [controlMode, setControlMode] = useState('adaptive');
+
+  // Default the controller to the scenario's "AI Optimization" setting.
+  useEffect(() => {
+    setControlMode(loadedScenario?.config?.aiOptimization === false ? 'fixed' : 'adaptive');
+  }, [loadedScenario]);
+
+  // Approach demand: spread the scenario's total flow volume over 4 approaches.
+  const flowVolume = (loadedScenario?.vehicle_flows || []).reduce((s, f) => s + (Number(f.volume) || 0), 0);
+  const demand = flowVolume > 0 ? Math.min(1200, Math.max(50, flowVolume / 4)) : undefined;
+
   const engine = useSimulationEngine({
     duration: scenarioConfig.duration || 60,
+    controlMode,
+    timeOfDay: scenarioConfig.timeOfDay || 'rush-hour',
+    weatherCondition: scenarioConfig.weatherCondition || 'clear',
+    demand,
   });
 
   const {
     isRunning, speed, setSpeed, elapsedSeconds, duration,
-    signalStates, timings, metrics, vehicles, aiDecisions,
+    signalStates, timings, metrics, baselineMetrics, vehicles, aiDecisions,
     emergencyActive, currentPhaseLabel,
     play, pause, reset, triggerEmergency,
   } = engine;
@@ -93,22 +108,47 @@ export default function Simulation() {
       return;
     }
     setSavingResults(true);
-    await base44.entities.TrafficScenario.update(loadedScenario.id, {
-      status: 'completed',
-      results: {
-        avgWaitTime: Math.round(metrics.avgWaitTime),
-        throughput: Math.round(metrics.throughput),
-        queueLength: Math.round(metrics.queueLength),
-        efficiency: Math.round(metrics.efficiency),
-        totalVehicles: metrics.totalVehicles,
-        co2Saved: parseFloat(metrics.co2Saved.toFixed(2)),
-        durationRan: elapsedSeconds,
-        completedAt: new Date().toISOString(),
-      },
-    });
-    setSavingResults(false);
-    toast({ title: 'Results saved', description: `Results for "${loadedScenario.name}" saved.` });
+    try {
+      await base44.entities.TrafficScenario.update(loadedScenario.id, {
+        status: 'completed',
+        results: {
+          controlMode,
+          avgWaitTime: Math.round(metrics.avgWaitTime),
+          throughput: Math.round(metrics.throughput),
+          queueLength: Math.round(metrics.queueLength),
+          efficiency: Math.round(metrics.efficiency),
+          totalVehicles: metrics.totalVehicles,
+          co2Saved: parseFloat(metrics.co2Saved.toFixed(2)),
+          durationRan: elapsedSeconds,
+          baseline: baselineMetrics
+            ? {
+                avgWaitTime: Math.round(baselineMetrics.avgWaitTime),
+                throughput: Math.round(baselineMetrics.throughput),
+                queueLength: Math.round(baselineMetrics.queueLength),
+              }
+            : null,
+          completedAt: new Date().toISOString(),
+        },
+      });
+      toast({ title: 'Results saved', description: `Results for "${loadedScenario.name}" saved.` });
+    } catch (error) {
+      toast({ title: 'Could not save results', description: error?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setSavingResults(false);
+    }
   };
+
+  const handleControlModeChange = (value) => {
+    if (isRunning) {
+      toast({ title: 'Stop the simulation first', variant: 'destructive' });
+      return;
+    }
+    setControlMode(value);
+  };
+
+  const waitReduction = baselineMetrics && baselineMetrics.avgWaitTime > 0
+    ? ((baselineMetrics.avgWaitTime - metrics.avgWaitTime) / baselineMetrics.avgWaitTime) * 100
+    : null;
 
   const scenarioName = loadedScenario?.name || 'Default Scenario';
 
@@ -134,9 +174,18 @@ export default function Simulation() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Traffic Simulation</h1>
-            <p className="text-slate-600">Real-time adaptive signal control</p>
+            <p className="text-slate-600">Queue-based simulation with {controlMode === 'adaptive' ? 'adaptive (queue-actuated)' : 'fixed-time'} signal control</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Select value={controlMode} onValueChange={handleControlModeChange}>
+              <SelectTrigger className="w-48 border-2" aria-label="Signal control mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="adaptive">Adaptive control</SelectItem>
+                <SelectItem value="fixed">Fixed-time control</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={String(selectedScenarioId)} onValueChange={handleScenarioChange}>
               <SelectTrigger className="w-56 border-2">
                 <SelectValue placeholder="Select scenario" />
@@ -172,6 +221,21 @@ export default function Simulation() {
           currentPhaseLabel={currentPhaseLabel}
           scenarioName={scenarioName}
         />
+
+        {/* Adaptive vs fixed-time comparison */}
+        {controlMode === 'adaptive' && baselineMetrics && elapsedSeconds >= 60 && (
+          <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="baseline-comparison">
+            <Badge variant="outline">
+              Fixed-time baseline: {Math.round(baselineMetrics.avgWaitTime)}s avg wait, {Math.round(baselineMetrics.queueLength)} queued
+            </Badge>
+            {waitReduction !== null && (
+              <Badge className={waitReduction >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                {waitReduction >= 0 ? '▼' : '▲'} {Math.abs(waitReduction).toFixed(0)}% wait time vs fixed-time
+              </Badge>
+            )}
+            <Badge className="bg-emerald-100 text-emerald-800">{metrics.co2Saved.toFixed(2)} kg CO₂ saved</Badge>
+          </div>
+        )}
 
         {/* Scenario Info */}
         {loadedScenario && (
