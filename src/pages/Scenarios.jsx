@@ -106,7 +106,8 @@ export default function Scenarios() {
   };
 
   const handleImportComplete = (data) => {
-    toast({ title: 'Data imported', description: 'Traffic data file processed successfully.' });
+    const count = Array.isArray(data?.data) ? data.data.length : 0;
+    toast({ title: 'Data imported', description: `${count} traffic record(s) processed successfully.` });
   };
 
   // Filter & sort

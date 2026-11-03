@@ -50,9 +50,7 @@ export default function TrafficData() {
 
   const [fileToProcess, setFileToProcess] = useState(null);
 
-  const handleImportComplete = (data) => {
-    console.log('Data imported:', data);
-  };
+  const handleImportComplete = () => {};
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];

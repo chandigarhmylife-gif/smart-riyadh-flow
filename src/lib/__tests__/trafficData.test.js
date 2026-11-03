@@ -52,3 +52,48 @@ describe('cleanAndTransform', () => {
     expect(r).toMatchObject({ direction: 'unknown', vehicleCount: 0, avgSpeed: 0, queueLength: 0 });
   });
 });
+
+import { parseCSVLine, detectFormat, parseTrafficFile } from '../trafficData';
+
+describe('CSV quoting', () => {
+  it('keeps commas inside quoted fields', () => {
+    expect(parseCSVLine('"King Fahd Rd, NB",42,"07:00"')).toEqual(['King Fahd Rd, NB', '42', '07:00']);
+  });
+
+  it('unescapes doubled quotes', () => {
+    expect(parseCSVLine('"say ""hi""",1')).toEqual(['say "hi"', '1']);
+  });
+
+  it('parses a quoted location column end to end', () => {
+    const rows = parseCSV('location,count,time\n"Olaya St, SB",12,07:15');
+    expect(rows).toEqual([{ location: 'Olaya St, SB', count: '12', time: '07:15' }]);
+  });
+});
+
+describe('file handling', () => {
+  it('detects format by MIME type or extension', () => {
+    expect(detectFormat({ name: 'counts.CSV', type: '' })).toBe('csv');
+    expect(detectFormat({ name: 'x.json', type: '' })).toBe('json');
+    expect(detectFormat({ name: 'x', type: 'application/json' })).toBe('json');
+    expect(detectFormat({ name: 'photo.png', type: 'image/png' })).toBe(null);
+  });
+
+  it('gives a readable error for malformed JSON', () => {
+    let message = '';
+    try { parseTrafficFile('{oops', 'json'); } catch (e) { message = e.message; }
+    expect(message).toBe('The file is not valid JSON.');
+  });
+
+  it('rejects unsupported formats and bare JSON values', () => {
+    let a = '';
+    let b = '';
+    try { parseTrafficFile('hi', null); } catch (e) { a = e.message; }
+    try { parseTrafficFile('42', 'json'); } catch (e) { b = e.message; }
+    expect(a.startsWith('Unsupported file type')).toBe(true);
+    expect(b).toBe('JSON must be an object or an array of records.');
+  });
+
+  it('ignores non-object entries when normalising', () => {
+    expect(cleanAndTransform([null, 5, { count: '2', timestamp: 't' }])).toHaveLength(1);
+  });
+});

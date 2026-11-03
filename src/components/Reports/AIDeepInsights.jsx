@@ -20,11 +20,14 @@ const BADGE_MAP = {
 export default function AIDeepInsights({ reportTitle }) {
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState(null);
+  const [error, setError] = useState(null);
 
   const generate = async () => {
     setLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an expert traffic AI analyst. Based on the report "${reportTitle || 'Traffic Performance Report'}" for the Smart Riyadh Flow system, generate deep AI-driven insights. Return exactly 6 insights as JSON.
+    setError(null);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are an expert traffic AI analyst. Based on the report "${reportTitle || 'Traffic Performance Report'}" for the Smart Riyadh Flow system, generate deep AI-driven insights. Return exactly 6 insights as JSON.
 
 Each insight must have:
 - type: one of "anomaly", "rootcause", or "forecast"
@@ -33,26 +36,30 @@ Each insight must have:
 - severity: "high", "medium", or "low"
 
 Return 2 anomalies, 2 root causes, and 2 forecasts. Be specific to Riyadh traffic context with realistic numbers.`,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          insights: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                type: { type: 'string' },
-                title: { type: 'string' },
-                detail: { type: 'string' },
-                severity: { type: 'string' }
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            insights: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string' },
+                  title: { type: 'string' },
+                  detail: { type: 'string' },
+                  severity: { type: 'string' }
+                }
               }
             }
           }
         }
-      }
-    });
-    setInsights(result.insights || []);
-    setLoading(false);
+      });
+      setInsights(result?.insights || []);
+    } catch (err) {
+      setError(err?.message || 'Could not generate insights. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,6 +77,9 @@ Return 2 anomalies, 2 root causes, and 2 forecasts. Be specific to Riyadh traffi
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {error && (
+          <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>
+        )}
         {!insights && !loading && (
           <div className="text-center py-8 text-slate-400">
             <Brain className="w-10 h-10 mx-auto mb-2 opacity-30" />

@@ -17,8 +17,10 @@ import AIDeepInsights from '../components/Reports/AIDeepInsights';
 import AutomatedDistribution from '../components/Reports/AutomatedDistribution';
 import CustomTemplateBuilder from '../components/Reports/CustomTemplateBuilder';
 import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Reports() {
+  const { toast } = useToast();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedMetrics, setSelectedMetrics] = useState({
@@ -54,12 +56,13 @@ export default function Reports() {
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
-    const activeMetrics = Object.entries(selectedMetrics)
-      .filter(([, v]) => v)
-      .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim())
-      .join(', ');
+    try {
+      const activeMetrics = Object.entries(selectedMetrics)
+        .filter(([, v]) => v)
+        .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim())
+        .join(', ');
 
-    const prompt = `You are a senior traffic engineering consultant with 20+ years of experience. Generate a highly detailed, professional traffic control performance report in Markdown format. This report should be comprehensive enough to present to a city council or transportation authority.
+      const prompt = `You are a senior traffic engineering consultant with 20+ years of experience. Generate a highly detailed, professional traffic control performance report in Markdown format. This report should be comprehensive enough to present to a city council or transportation authority.
 
 **Report Configuration:**
 - Report Type: ${selectedTemplate.name}
@@ -130,13 +133,21 @@ Strong closing paragraph summarizing value delivered and path forward.
 - Be specific about Riyadh intersections (e.g., King Fahd Road / Olaya Street, King Abdullah Road / Tahlia Street)
 - Minimum length: very thorough and comprehensive`;
 
-    const result = await base44.integrations.Core.InvokeLLM({ prompt });
-    setGeneratedReport({
-      title: `${selectedTemplate.name} — ${dateRange.start || 'Jan 2026'} to ${dateRange.end || 'Feb 2026'}`,
-      content: result,
-      templateType: selectedTemplate.type,
-    });
-    setIsGenerating(false);
+      const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      setGeneratedReport({
+        title: `${selectedTemplate.name} — ${dateRange.start || 'Jan 2026'} to ${dateRange.end || 'Feb 2026'}`,
+        content: result,
+        templateType: selectedTemplate.type,
+      });
+    } catch (error) {
+      toast({
+        title: 'Report generation failed',
+        description: error?.message || 'Please try again in a moment.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

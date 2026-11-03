@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { parseCSV, validateJsonData, validateCsvData, cleanAndTransform } from '@/lib/trafficData';
+import {
+  MAX_IMPORT_BYTES,
+  detectFormat,
+  parseTrafficFile,
+  validateJsonData,
+  validateCsvData,
+  cleanAndTransform,
+} from '@/lib/trafficData';
 
 export default function FileProcessor({ file, onProcessComplete }) {
   const [processing, setProcessing] = useState(false);
@@ -15,22 +22,18 @@ export default function FileProcessor({ file, onProcessComplete }) {
     setProgress(0);
 
     try {
+      if (file.size > MAX_IMPORT_BYTES) {
+        throw new Error('File size exceeds the 10MB limit.');
+      }
+      const format = detectFormat(file);
       const text = await file.text();
-      
+
       // Simulate processing steps
       setProgress(20);
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      let data;
-      let quality = { errors: [], warnings: [], totalRecords: 0, validRecords: 0 };
-
-      if (file.type === 'application/json') {
-        data = JSON.parse(text);
-        quality = validateJsonData(data);
-      } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        data = parseCSV(text);
-        quality = validateCsvData(data);
-      }
+      const data = parseTrafficFile(text, format);
+      const quality = format === 'json' ? validateJsonData(data) : validateCsvData(data);
 
       setProgress(60);
       await new Promise(resolve => setTimeout(resolve, 300));

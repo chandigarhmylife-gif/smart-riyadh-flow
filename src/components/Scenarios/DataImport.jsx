@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { detectFormat, parseTrafficFile, cleanAndTransform } from '@/lib/trafficData';
 
 export default function DataImport({ onImportComplete }) {
   const [file, setFile] = useState(null);
@@ -54,13 +55,8 @@ export default function DataImport({ onImportComplete }) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          let data;
-          if (file.type === 'application/json') {
-            data = JSON.parse(e.target.result);
-          } else {
-            // CSV parsing would go here
-            data = { message: 'CSV parsing to be implemented' };
-          }
+          const raw = parseTrafficFile(e.target.result, detectFormat(file));
+          const data = cleanAndTransform(raw);
           
           setValidation({
             status: 'success',
@@ -73,7 +69,7 @@ export default function DataImport({ onImportComplete }) {
         } catch (error) {
           setValidation({
             status: 'error',
-            message: 'Failed to parse file data.'
+            message: error?.message || 'Failed to parse file data.'
           });
         }
       };
