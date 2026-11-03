@@ -37,6 +37,77 @@ export function isGreenPhase(phaseIndex) {
   return p.north === 'green' || p.east === 'green';
 }
 
+// ---------------------------------------------------------------------------
+// Adaptive (queue-actuated) control
+// ---------------------------------------------------------------------------
+
+export const ADAPTIVE_LIMITS = {
+  minGreen: 10, // seconds a green must last before it can end
+  maxGreen: 50, // hard cap so the cross street is never starved
+  gapQueue: 1, // end green early ("gap out") once the served queue is this small
+};
+
+const SERVED = {
+  0: ['north', 'south'],
+  2: ['east', 'west'],
+};
+const OPPOSING = {
+  0: ['east', 'west'],
+  2: ['north', 'south'],
+};
+
+const sumQueues = (queues, dirs) => dirs.reduce((s, d) => s + (queues[d] ?? 0), 0);
+
+export function initialAdaptiveState(limits = ADAPTIVE_LIMITS) {
+  return { phase: 0, phaseTimer: limits.maxGreen, greenElapsed: 0 };
+}
+
+/**
+ * Advance an adaptive plan by one second using current queue lengths.
+ *
+ * Green phases run between minGreen and maxGreen. After minGreen the green ends
+ * when its own queue has cleared (gap-out) or when maxGreen is reached
+ * (max-out), but only if traffic is waiting on the cross street; otherwise the
+ * green rests where it is. Yellow phases keep their fixed duration.
+ *
+ * Returns { phase, phaseTimer, greenElapsed, changed, reason } where reason is
+ * 'gap-out' | 'max-out' | 'yellow-end' | null.
+ */
+export function tickSignalAdaptive(state, queues, limits = ADAPTIVE_LIMITS) {
+  const { phase } = state;
+
+  if (!isGreenPhase(phase)) {
+    if (state.phaseTimer > 1) {
+      return { ...state, phaseTimer: state.phaseTimer - 1, changed: false, reason: null };
+    }
+    const next = (phase + 1) % PHASE_CONFIGS.length;
+    return { phase: next, phaseTimer: limits.maxGreen, greenElapsed: 0, changed: true, reason: 'yellow-end' };
+  }
+
+  const greenElapsed = state.greenElapsed + 1;
+  const served = sumQueues(queues, SERVED[phase]);
+  const opposing = sumQueues(queues, OPPOSING[phase]);
+
+  let reason = null;
+  if (greenElapsed >= limits.minGreen && opposing > 0) {
+    if (greenElapsed >= limits.maxGreen) reason = 'max-out';
+    else if (served <= limits.gapQueue) reason = 'gap-out';
+  }
+
+  if (reason) {
+    const next = phase + 1; // the yellow that follows this green
+    return { phase: next, phaseTimer: PHASE_CONFIGS[next].duration, greenElapsed: 0, changed: true, reason };
+  }
+
+  return {
+    phase,
+    phaseTimer: Math.max(1, limits.maxGreen - greenElapsed),
+    greenElapsed,
+    changed: false,
+    reason: null,
+  };
+}
+
 /** Remaining green/yellow seconds shown per approach. */
 export function approachTimings(signalStates, phaseTimer) {
   const t = (s) => (s === 'green' || s === 'yellow' ? phaseTimer : 0);

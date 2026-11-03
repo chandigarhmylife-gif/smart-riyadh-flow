@@ -53,3 +53,48 @@ describe('signal plan', () => {
     expect(approachTimings(signalStatesFor(3), 2)).toEqual({ north: 0, south: 0, east: 2, west: 2 });
   });
 });
+
+import { tickSignalAdaptive, initialAdaptiveState, ADAPTIVE_LIMITS } from '../signalTiming';
+
+describe('adaptive control', () => {
+  const L = ADAPTIVE_LIMITS;
+  const greenAt = (greenElapsed) => ({ phase: 0, phaseTimer: L.maxGreen - greenElapsed, greenElapsed });
+
+  it('holds green for at least minGreen even if the queue is empty', () => {
+    const s = tickSignalAdaptive(greenAt(3), { north: 0, south: 0, east: 9, west: 9 });
+    expect(s.changed).toBe(false);
+    expect(s.greenElapsed).toBe(4);
+  });
+
+  it('gaps out after minGreen once the served queue clears', () => {
+    const s = tickSignalAdaptive(greenAt(L.minGreen), { north: 1, south: 0, east: 6, west: 2 });
+    expect(s).toMatchObject({ phase: 1, changed: true, reason: 'gap-out' });
+  });
+
+  it('keeps green while the served approach still has a queue', () => {
+    const s = tickSignalAdaptive(greenAt(20), { north: 5, south: 4, east: 6, west: 2 });
+    expect(s.changed).toBe(false);
+  });
+
+  it('maxes out at maxGreen so the cross street is not starved', () => {
+    const s = tickSignalAdaptive(greenAt(L.maxGreen - 1), { north: 30, south: 30, east: 1, west: 0 });
+    expect(s).toMatchObject({ phase: 1, changed: true, reason: 'max-out' });
+  });
+
+  it('rests in green when nobody is waiting on the cross street', () => {
+    const s = tickSignalAdaptive(greenAt(L.maxGreen + 5), { north: 0, south: 0, east: 0, west: 0 });
+    expect(s.changed).toBe(false);
+  });
+
+  it('runs yellow for its fixed duration, then starts the next green', () => {
+    let s = { phase: 1, phaseTimer: 2, greenElapsed: 0 };
+    s = tickSignalAdaptive(s, {});
+    expect(s).toMatchObject({ phase: 1, phaseTimer: 1, changed: false });
+    s = tickSignalAdaptive(s, {});
+    expect(s).toMatchObject({ phase: 2, changed: true, reason: 'yellow-end', greenElapsed: 0 });
+  });
+
+  it('starts in N-S green', () => {
+    expect(initialAdaptiveState().phase).toBe(0);
+  });
+});
