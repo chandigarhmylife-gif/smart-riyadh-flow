@@ -4,11 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Info, CheckCircle2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function LiveAlerts({ isActive }) {
-  const [alerts, setAlerts] = useState([]);
+const ICONS = { warning: AlertTriangle, success: CheckCircle2, info: Info };
+
+/**
+ * Alert feed. Pass `alerts` ([{ id, type, title, message, timestamp }]) to show
+ * real events from a simulation; without it the panel shows an illustrative feed.
+ */
+export default function LiveAlerts({ isActive, alerts: liveAlerts }) {
+  const [demoAlerts, setAlerts] = useState([]);
+  const [dismissed, setDismissed] = useState(() => new Set());
+
+  const alerts = liveAlerts
+    ? liveAlerts.filter((a) => !dismissed.has(a.id)).map((a) => ({ ...a, icon: a.icon || ICONS[a.type] || Info }))
+    : demoAlerts;
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || liveAlerts) return;
 
     const generateAlert = () => {
       const alertTypes = [
@@ -44,7 +55,7 @@ export default function LiveAlerts({ isActive }) {
 
     const interval = setInterval(generateAlert, 8000);
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, liveAlerts]);
 
   const getAlertStyle = (type) => {
     if (type === 'warning') return 'border-yellow-200 bg-yellow-50';
@@ -59,7 +70,11 @@ export default function LiveAlerts({ isActive }) {
   };
 
   const handleDismiss = (id) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== id));
+    if (liveAlerts) {
+      setDismissed((prev) => new Set(prev).add(id));
+    } else {
+      setAlerts(prev => prev.filter(alert => alert.id !== id));
+    }
   };
 
   return (
@@ -68,6 +83,7 @@ export default function LiveAlerts({ isActive }) {
         <CardTitle className="flex items-center space-x-2">
           <AlertTriangle className="w-5 h-5 text-orange-600" />
           <span>Live Alerts</span>
+          {!liveAlerts && <span className="text-xs font-normal text-slate-400">(demo feed)</span>}
           {alerts.length > 0 && (
             <Badge variant="secondary" className="ml-2">{alerts.length}</Badge>
           )}
@@ -96,6 +112,7 @@ export default function LiveAlerts({ isActive }) {
                         size="icon"
                         className="h-5 w-5 -mt-1"
                         onClick={() => handleDismiss(alert.id)}
+                        aria-label="Dismiss alert"
                       >
                         <X className="w-3 h-3" />
                       </Button>

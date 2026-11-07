@@ -18,6 +18,7 @@ import {
   modelMetrics,
   co2SavedKg,
 } from '@/lib/trafficModel';
+import { updateQueueAlerts, pushAlerts } from '@/lib/alerts';
 
 const VEHICLE_COLORS = ['#3B82F6', '#EF4444', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899'];
 const MAX_VEHICLES_DRAWN_PER_APPROACH = 8;
@@ -32,6 +33,16 @@ const EMPTY_METRICS = {
 };
 
 const OPPOSITE = { north: 'south', south: 'north', east: 'west', west: 'east' };
+
+/** Queue alert thresholds for a single-lane approach (vehicles). */
+const QUEUE_ALERT = { high: 15, clear: 5 };
+
+/**
+ * Pedestrian push-button demand per crosswalk (people/hour) and the minimum
+ * green a call requires: 7 s walk + 20 m crossing at 1.2 m/s (MUTCD values).
+ */
+export const PEDESTRIAN_RATES = { none: 0, low: 60, high: 240 };
+export const PEDESTRIAN_MIN_GREEN_S = 24;
 
 /** Seconds of simulated time between timeline samples. */
 export const HISTORY_INTERVAL_S = 10;
@@ -75,6 +86,8 @@ function directionLabel(phase) {
  *  - timeOfDay, weatherCondition: scale demand and capacity
  *  - demand: veh/h per approach (number or { north, south, east, west })
  *  - seed: RNG seed for reproducible runs (random when omitted; the seed used is returned)
+ *  - pedestrians: 'none' | 'low' | 'high' push-button demand. A call makes the
+ *    next adaptive green for that crossing last at least PEDESTRIAN_MIN_GREEN_S.
  *
  * In adaptive mode a fixed-time baseline runs in parallel with identical
  * arrivals, and co2Saved reports the idling CO2 avoided versus that baseline.
@@ -93,6 +106,8 @@ export default function useSimulationEngine(config = {}) {
   const [aiDecisions, setAiDecisions] = useState([]);
   const [emergencyActive, setEmergencyActive] = useState(false);
   const [history, setHistory] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [pedestrianCrossings, setPedestrianCrossings] = useState(0);
   const [seed, setSeed] = useState(null);
 
   const duration = config.duration || 60; // minutes
@@ -111,6 +126,10 @@ export default function useSimulationEngine(config = {}) {
   const rngRef = useRef(null);
   const baselineRngRef = useRef(null);
   const emergencyRef = useRef(false);
+  const queueAlertsRef = useRef(new Set());
+  const pedRngRef = useRef(null);
+  const pedCallsRef = useRef({ 0: false, 2: false }); // waiting calls per green phase
+  const pedServedRef = useRef(0);
   const emergencyTimeoutRef = useRef(null);
 
   const initModels = useCallback(() => {
@@ -128,6 +147,10 @@ export default function useSimulationEngine(config = {}) {
     const adaptive = c.controlMode !== 'fixed';
     baselineRef.current = adaptive ? createTrafficModel(options) : null;
     baselineRngRef.current = adaptive ? createRng(runSeed) : null;
+    pedRngRef.current = createRng(runSeed + 7); // separate stream: vehicle arrivals stay identical
+    pedCallsRef.current = { 0: false, 2: false };
+    pedServedRef.current = 0;
+    queueAlertsRef.current = new Set();
     signalRef.current = adaptive ? initialAdaptiveState() : initialSignalState();
     baselineSignalRef.current = initialSignalState();
     statesRef.current = signalStatesFor(0);
@@ -159,8 +182,25 @@ export default function useSimulationEngine(config = {}) {
 
       // 1. Signal controller
       const currentQueues = queueLengths(modelRef.current);
+      // Pedestrians press the button while their crossing's phase is not green.
+      const pedRate = PEDESTRIAN_RATES[configRef.current.pedestrians] || 0;
+      if (pedRate > 0) {
+        const p = 1 - Math.exp(-pedRate / 3600);
+        for (const greenPhase of [0, 2]) {
+          const ownGreen = signalRef.current.phase === greenPhase;
+          if (!ownGreen && pedRngRef.current() < p) pedCallsRef.current[greenPhase] = true;
+        }
+      }
+      const limits = {
+        ...ADAPTIVE_LIMITS,
+        minGreenByPhase: {
+          0: pedCallsRef.current[0] && signalRef.current.phase === 0 ? PEDESTRIAN_MIN_GREEN_S : undefined,
+          2: pedCallsRef.current[2] && signalRef.current.phase === 2 ? PEDESTRIAN_MIN_GREEN_S : undefined,
+        },
+      };
+
       const next = adaptive
-        ? tickSignalAdaptive(signalRef.current, currentQueues, ADAPTIVE_LIMITS)
+        ? tickSignalAdaptive(signalRef.current, currentQueues, limits)
         : tickSignal(signalRef.current);
       signalRef.current = {
         phase: next.phase,
@@ -168,6 +208,17 @@ export default function useSimulationEngine(config = {}) {
         greenElapsed: next.greenElapsed ?? 0,
       };
       setPhaseTimer(next.phaseTimer);
+
+      // A green that started with a waiting call serves it; the call stays
+      // latched (holding the minimum green) until that green ends.
+      if (next.changed && (signalRef.current.phase === 1 || signalRef.current.phase === 3)) {
+        const ended = signalRef.current.phase - 1;
+        if (pedCallsRef.current[ended]) {
+          pedCallsRef.current[ended] = false;
+          pedServedRef.current += 1;
+          setPedestrianCrossings(pedServedRef.current);
+        }
+      }
 
       if (next.changed) {
         setPhase(next.phase);
@@ -241,6 +292,13 @@ export default function useSimulationEngine(config = {}) {
       }
 
       setMetrics({ ...m, co2Saved });
+
+      // Queue alerts per approach
+      const qa = updateQueueAlerts(queueAlertsRef.current, queueLengths(modelRef.current), QUEUE_ALERT);
+      queueAlertsRef.current = qa.active;
+      if (qa.events.length) {
+        setAlerts((prev) => pushAlerts(prev, qa.events, modelRef.current.elapsed, (d) => `${d} approach`));
+      }
       setQueues(queueLengths(modelRef.current));
 
       setElapsedSeconds((prev) => {
@@ -290,6 +348,9 @@ export default function useSimulationEngine(config = {}) {
     setEmergencyActive(false);
     setHistory([]);
     setSeed(null);
+    setAlerts([]);
+    setPedestrianCrossings(0);
+    queueAlertsRef.current = new Set();
   }, []);
 
   // Changing control mode mid-run would mix two controllers' statistics.
@@ -303,6 +364,10 @@ export default function useSimulationEngine(config = {}) {
 
   const triggerEmergency = useCallback((direction) => {
     emergencyRef.current = true;
+    setAlerts((prev) => pushAlerts(prev, [{
+      kind: 'emergency',
+      message: `Green corridor for ${direction}-${OPPOSITE[direction]} traffic for 15 s; cross traffic held.`,
+    }], modelRef.current?.elapsed ?? 0));
     setEmergencyActive(true);
     const dirs = { north: 'red', south: 'red', east: 'red', west: 'red' };
     dirs[direction] = 'green';
@@ -346,6 +411,8 @@ export default function useSimulationEngine(config = {}) {
     currentPhaseLabel,
     history,
     seed,
+    alerts,
+    pedestrianCrossings,
     play,
     pause,
     reset,

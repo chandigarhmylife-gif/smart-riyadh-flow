@@ -35,6 +35,7 @@ export default function Simulation() {
   const [savingResults, setSavingResults] = useState(false);
   const [rightTab, setRightTab] = useState('metrics');
   const [seedInput, setSeedInput] = useState('');
+  const [pedestrians, setPedestrians] = useState('low');
 
   // Fetch saved scenarios for dropdown
   const { data: scenarios = [], isLoading: loadingScenarios } = useQuery({
@@ -82,12 +83,13 @@ export default function Simulation() {
     weatherCondition: scenarioConfig.weatherCondition || 'clear',
     demand,
     seed: seedInput.trim() === '' ? undefined : Number(seedInput),
+    pedestrians,
   });
 
   const {
     isRunning, speed, setSpeed, elapsedSeconds, duration,
     signalStates, timings, metrics, baselineMetrics, vehicles, aiDecisions,
-    emergencyActive, currentPhaseLabel, history, seed,
+    emergencyActive, currentPhaseLabel, history, seed, alerts, pedestrianCrossings,
     play, pause, reset, triggerEmergency,
   } = engine;
 
@@ -191,6 +193,16 @@ export default function Simulation() {
                 <SelectItem value="fixed">Fixed-time control</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={pedestrians} onValueChange={setPedestrians}>
+              <SelectTrigger className="w-40 border-2" aria-label="Pedestrian demand">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No pedestrians</SelectItem>
+                <SelectItem value="low">Pedestrians: low</SelectItem>
+                <SelectItem value="high">Pedestrians: high</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               value={seedInput}
               onChange={(e) => setSeedInput(e.target.value.replace(/[^0-9]/g, ''))}
@@ -249,6 +261,9 @@ export default function Simulation() {
               </Badge>
             )}
             <Badge className="bg-emerald-100 text-emerald-800">{metrics.co2Saved.toFixed(2)} kg CO₂ saved</Badge>
+            {pedestrians !== 'none' && (
+              <Badge variant="outline">🚶 {pedestrianCrossings} pedestrian crossings served</Badge>
+            )}
           </div>
         )}
 
@@ -313,6 +328,7 @@ export default function Simulation() {
                   time_of_day: scenarioConfig.timeOfDay || 'rush-hour',
                   weather: scenarioConfig.weatherCondition || 'clear',
                   demand_veh_per_h: demand ?? 'default',
+                  pedestrians,
                 }}
               />
               <AIDecisions decisions={aiDecisions} />
@@ -339,7 +355,7 @@ export default function Simulation() {
                     queueLength: metrics.queueLength,
                   }}
                 />
-                <LiveAlerts isActive={isRunning} />
+                <LiveAlerts isActive={isRunning} alerts={alerts} />
               </TabsContent>
 
               <TabsContent value="ai" className="space-y-4 mt-0">
