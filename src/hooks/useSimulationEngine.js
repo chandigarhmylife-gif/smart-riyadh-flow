@@ -33,6 +33,10 @@ const EMPTY_METRICS = {
 
 const OPPOSITE = { north: 'south', south: 'north', east: 'west', west: 'east' };
 
+/** Seconds of simulated time between timeline samples. */
+export const HISTORY_INTERVAL_S = 10;
+const MAX_HISTORY_POINTS = 1440; // 4 hours at 10 s
+
 /** Vehicles for the 3D view, one per queued car (capped), per approach. */
 function vehiclesFromQueues(signalStates, isRunning, queues) {
   let id = 0;
@@ -70,7 +74,7 @@ function directionLabel(phase) {
  *  - controlMode: 'adaptive' (queue-actuated) | 'fixed' (63 s fixed-time plan)
  *  - timeOfDay, weatherCondition: scale demand and capacity
  *  - demand: veh/h per approach (number or { north, south, east, west })
- *  - seed: RNG seed for reproducible runs
+ *  - seed: RNG seed for reproducible runs (random when omitted; the seed used is returned)
  *
  * In adaptive mode a fixed-time baseline runs in parallel with identical
  * arrivals, and co2Saved reports the idling CO2 avoided versus that baseline.
@@ -88,6 +92,8 @@ export default function useSimulationEngine(config = {}) {
   const [vehicles, setVehicles] = useState([]);
   const [aiDecisions, setAiDecisions] = useState([]);
   const [emergencyActive, setEmergencyActive] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [seed, setSeed] = useState(null);
 
   const duration = config.duration || 60; // minutes
   const controlMode = config.controlMode === 'fixed' ? 'fixed' : 'adaptive';
@@ -115,12 +121,13 @@ export default function useSimulationEngine(config = {}) {
       weather: c.weatherCondition || 'clear',
       lanes: c.lanes || 1,
     };
-    const seed = c.seed ?? Date.now();
+    const runSeed = Number.isFinite(c.seed) ? c.seed : Math.floor(Math.random() * 1e9);
+    setSeed(runSeed);
     modelRef.current = createTrafficModel(options);
-    rngRef.current = createRng(seed);
+    rngRef.current = createRng(runSeed);
     const adaptive = c.controlMode !== 'fixed';
     baselineRef.current = adaptive ? createTrafficModel(options) : null;
-    baselineRngRef.current = adaptive ? createRng(seed) : null;
+    baselineRngRef.current = adaptive ? createRng(runSeed) : null;
     signalRef.current = adaptive ? initialAdaptiveState() : initialSignalState();
     baselineSignalRef.current = initialSignalState();
     statesRef.current = signalStatesFor(0);
@@ -199,6 +206,7 @@ export default function useSimulationEngine(config = {}) {
 
       // 3. Fixed-time baseline with identical arrivals (adaptive mode only)
       let co2Saved = 0;
+      let baseM = null;
       if (baselineRef.current) {
         const b = tickSignal(baselineSignalRef.current);
         baselineSignalRef.current = { phase: b.phase, phaseTimer: b.phaseTimer };
@@ -208,7 +216,28 @@ export default function useSimulationEngine(config = {}) {
           baselineRngRef.current
         );
         co2Saved = co2SavedKg(modelRef.current, baselineRef.current);
-        setBaselineMetrics(modelMetrics(baselineRef.current));
+        baseM = modelMetrics(baselineRef.current);
+        setBaselineMetrics(baseM);
+      }
+
+      // 4. Timeline sample
+      const t = modelRef.current.elapsed;
+      if (t % HISTORY_INTERVAL_S === 0) {
+        const point = {
+          t,
+          avgWaitTime: m.avgWaitTime,
+          queueLength: m.queueLength,
+          throughput: m.throughput,
+          stopRate: m.stopRate,
+          efficiency: m.efficiency,
+          co2Saved,
+          baselineAvgWaitTime: baseM ? baseM.avgWaitTime : null,
+          baselineQueueLength: baseM ? baseM.queueLength : null,
+        };
+        setHistory((prev) => {
+          const next = [...prev, point];
+          return next.length > MAX_HISTORY_POINTS ? next.slice(-MAX_HISTORY_POINTS) : next;
+        });
       }
 
       setMetrics({ ...m, co2Saved });
@@ -259,6 +288,8 @@ export default function useSimulationEngine(config = {}) {
     setVehicles([]);
     setAiDecisions([]);
     setEmergencyActive(false);
+    setHistory([]);
+    setSeed(null);
   }, []);
 
   // Changing control mode mid-run would mix two controllers' statistics.
@@ -313,6 +344,8 @@ export default function useSimulationEngine(config = {}) {
     aiDecisions,
     emergencyActive,
     currentPhaseLabel,
+    history,
+    seed,
     play,
     pause,
     reset,

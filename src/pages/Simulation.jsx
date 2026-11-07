@@ -25,6 +25,8 @@ import PublicTransitPriority from '../components/Transit/PublicTransitPriority';
 import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 import EmergencyPriority from '../components/Simulation/EmergencyPriority';
 import VehicleTypes from '../components/Simulation/VehicleTypes';
+import SimulationTimeline from '../components/Simulation/SimulationTimeline';
+import { Input } from '@/components/ui/input';
 
 export default function Simulation() {
   const { toast } = useToast();
@@ -32,6 +34,7 @@ export default function Simulation() {
   const [loadedScenario, setLoadedScenario] = useState(null);
   const [savingResults, setSavingResults] = useState(false);
   const [rightTab, setRightTab] = useState('metrics');
+  const [seedInput, setSeedInput] = useState('');
 
   // Fetch saved scenarios for dropdown
   const { data: scenarios = [], isLoading: loadingScenarios } = useQuery({
@@ -78,12 +81,13 @@ export default function Simulation() {
     timeOfDay: scenarioConfig.timeOfDay || 'rush-hour',
     weatherCondition: scenarioConfig.weatherCondition || 'clear',
     demand,
+    seed: seedInput.trim() === '' ? undefined : Number(seedInput),
   });
 
   const {
     isRunning, speed, setSpeed, elapsedSeconds, duration,
     signalStates, timings, metrics, baselineMetrics, vehicles, aiDecisions,
-    emergencyActive, currentPhaseLabel,
+    emergencyActive, currentPhaseLabel, history, seed,
     play, pause, reset, triggerEmergency,
   } = engine;
 
@@ -113,6 +117,7 @@ export default function Simulation() {
         status: 'completed',
         results: {
           controlMode,
+          seed,
           avgWaitTime: Math.round(metrics.avgWaitTime),
           throughput: Math.round(metrics.throughput),
           queueLength: Math.round(metrics.queueLength),
@@ -186,6 +191,16 @@ export default function Simulation() {
                 <SelectItem value="fixed">Fixed-time control</SelectItem>
               </SelectContent>
             </Select>
+            <Input
+              value={seedInput}
+              onChange={(e) => setSeedInput(e.target.value.replace(/[^0-9]/g, ''))}
+              disabled={isRunning}
+              placeholder="Seed (random)"
+              inputMode="numeric"
+              className="w-36 border-2"
+              aria-label="Random seed for a repeatable run"
+              title="Enter a seed to replay exactly the same traffic. Leave blank for a new random run."
+            />
             <Select value={String(selectedScenarioId)} onValueChange={handleScenarioChange}>
               <SelectTrigger className="w-56 border-2">
                 <SelectValue placeholder="Select scenario" />
@@ -287,8 +302,19 @@ export default function Simulation() {
               </TabsContent>
             </Tabs>
 
-            {/* AI Decisions below canvas */}
-            <div className="mt-4">
+            {/* Timeline and AI decisions below canvas */}
+            <div className="mt-4 space-y-4">
+              <SimulationTimeline
+                history={history}
+                controlMode={controlMode}
+                seed={seed}
+                scenarioName={loadedScenario?.name}
+                settings={{
+                  time_of_day: scenarioConfig.timeOfDay || 'rush-hour',
+                  weather: scenarioConfig.weatherCondition || 'clear',
+                  demand_veh_per_h: demand ?? 'default',
+                }}
+              />
               <AIDecisions decisions={aiDecisions} />
             </div>
           </div>
@@ -304,7 +330,15 @@ export default function Simulation() {
 
               <TabsContent value="metrics" className="space-y-4 mt-0">
                 <MetricsSidebar metrics={metrics} isRunning={isRunning} />
-                <LiveMetricsStream isActive={isRunning} />
+                <LiveMetricsStream
+                  isActive={isRunning}
+                  metrics={{
+                    waitTime: metrics.avgWaitTime,
+                    throughput: metrics.throughput,
+                    efficiency: metrics.efficiency,
+                    queueLength: metrics.queueLength,
+                  }}
+                />
                 <LiveAlerts isActive={isRunning} />
               </TabsContent>
 
