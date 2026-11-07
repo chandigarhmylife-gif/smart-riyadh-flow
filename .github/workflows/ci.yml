@@ -17,3 +17,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
+      - name: Check Strategy Lab worker was bundled
+        run: |
+          ls dist/assets
+          ls dist/assets | grep -q 'strategyLab.worker' || { echo "Strategy Lab worker bundle missing"; exit 1; }
