@@ -10,7 +10,15 @@ import {
   setNetworkConditions,
   setTransitPriority as setNetworkTransitPriority,
   updateNodeSettings,
+  setIncident as setNetworkIncident,
+  roadStates,
+  eventsSince,
 } from '@/lib/networkModel';
+import { updateQueueAlerts, pushAlerts } from '@/lib/alerts';
+import { DIRECTIONS, queueLengths } from '@/lib/trafficModel';
+
+/** Queue alert thresholds per approach (vehicles), for 2-lane approaches. */
+const QUEUE_ALERT = { high: 30, clear: 10 };
 
 const EMPTY_STATS = { waitTime: 0, throughput: 0, queueLength: 0, efficiency: 0, stopRate: 0 };
 
@@ -32,6 +40,8 @@ const WEATHER_IMPACT = { clear: 0, cloudy: 5, rain: 20, 'heavy-rain': 40, snow: 
  * controlMode:
  *  - 'coordinated': fixed-time plans; synchronized intersections share a green wave
  *  - 'adaptive': every intersection runs queue-actuated control on its own
+ *  - 'adaptive-platoon': adaptive control that also sees vehicles arriving
+ *    from upstream signals and holds or brings forward green for them
  *
  * A baseline network with uncoordinated fixed-time signals runs alongside on
  * identical arrivals, so the benefit of coordination or adaptive control is measured.
@@ -51,6 +61,8 @@ export default function useNetworkSimulation() {
   const [baselineSummary, setBaselineSummary] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [controlMode, setControlModeState] = useState('coordinated');
+  const [roads, setRoads] = useState([]);
+  const [alerts, setAlerts] = useState([]);
 
   const netRef = useRef(null);
   const baseRef = useRef(null);
@@ -64,6 +76,20 @@ export default function useNetworkSimulation() {
     heavyVehicleShare: ((vehicleDistribution.truck || 0) + (vehicleDistribution.bus || 0)) / 100,
   };
   const emergencyTimeouts = useRef([]);
+  const queueAlertsRef = useRef(new Set());
+  const eventIndexRef = useRef(0);
+
+  // Read and write through the ref so rapid successive edits don't overwrite each other.
+  const commit = (next) => {
+    intersectionsRef.current = next;
+    setIntersections(next);
+  };
+
+  const nameOf = (id) => intersectionsRef.current.find((i) => i.id === Number(id))?.name || `Intersection ${id}`;
+  const describeKey = (key) => {
+    const [id, dir] = key.split(':');
+    return `${nameOf(id)}, ${dir} approach`;
+  };
 
   /** (Re)build the network and its uncoordinated baseline from current settings. */
   const buildNetworks = useCallback((nodes = intersectionsRef.current) => {
@@ -78,6 +104,16 @@ export default function useNetworkSimulation() {
     };
     netRef.current = createNetwork(nodes, { ...common, controlMode: s.controlMode });
     baseRef.current = createNetwork(nodes, { ...common, controlMode: 'independent' });
+    // Carry active incidents over to the rebuilt networks.
+    for (const n of nodes) {
+      if (n.incident) {
+        setNetworkIncident(netRef.current, n.id, n.incident);
+        setNetworkIncident(baseRef.current, n.id, n.incident);
+      }
+    }
+    // Incidents carried over above are already shown; only report new events.
+    eventIndexRef.current = netRef.current.eventSeq;
+    queueAlertsRef.current = new Set();
   }, []);
 
   // Main loop: one simulated second per tick.
@@ -97,6 +133,29 @@ export default function useNetworkSimulation() {
       setSummary(networkSummary(netRef.current));
       setBaselineSummary(networkSummary(baseRef.current));
       setVehicles(vehiclePositions(netRef.current));
+      setRoads(roadStates(netRef.current));
+
+      // Alerts: queue build-up per approach, plus spillback/incident events.
+      const net = netRef.current;
+      const queues = {};
+      for (const id of net.order) {
+        if (net.nodes[id].status === 'inactive') continue;
+        const q = queueLengths(net.nodes[id].model);
+        for (const d of DIRECTIONS) queues[`${id}:${d}`] = q[d];
+      }
+      const qa = updateQueueAlerts(queueAlertsRef.current, queues, QUEUE_ALERT);
+      queueAlertsRef.current = qa.active;
+      const fresh = eventsSince(net, eventIndexRef.current).map((e) => ({
+        ...e,
+        kind: e.type,
+        fromName: e.from !== undefined ? nameOf(e.from) : undefined,
+        toName: e.to !== undefined ? nameOf(e.to) : undefined,
+        name: e.node !== undefined ? nameOf(e.node) : undefined,
+      }));
+      eventIndexRef.current = net.eventSeq;
+      const events = [...qa.events, ...fresh];
+      if (events.length) setAlerts((prev) => pushAlerts(prev, events, net.t, describeKey));
+
       setElapsedTime((t) => t + 1);
     }, Math.max(50, 1000 / speed));
     return () => clearInterval(interval);
@@ -126,8 +185,11 @@ export default function useNetworkSimulation() {
     setSummary(EMPTY_SUMMARY);
     setBaselineSummary(null);
     setVehicles([]);
+    setRoads([]);
+    setAlerts([]);
     setEmergencyVehicles([]);
     setIncidents([]);
+    commit(intersectionsRef.current.map((i) => ({ ...i, incident: null })));
   };
 
   /** Changing the controller restarts the run so statistics aren't mixed. */
@@ -140,6 +202,8 @@ export default function useNetworkSimulation() {
     setSummary(EMPTY_SUMMARY);
     setBaselineSummary(null);
     setVehicles([]);
+    setRoads([]);
+    setAlerts([]);
     setIntersections((prev) => prev.map((i) => ({ ...i, ...EMPTY_STATS })));
   };
 
@@ -153,11 +217,6 @@ export default function useNetworkSimulation() {
     setBaselineSummary(null);
   };
 
-  // Read and write through the ref so rapid successive edits don't overwrite each other.
-  const commit = (next) => {
-    intersectionsRef.current = next;
-    setIntersections(next);
-  };
 
   const addIntersection = (data) => {
     const intersections = intersectionsRef.current;
@@ -219,6 +278,12 @@ export default function useNetworkSimulation() {
       intersection: target?.name,
       timestamp: new Date().toLocaleTimeString(),
     };
+    if (netRef.current) {
+      setAlerts((prev) => pushAlerts(prev, [{
+        kind: 'emergency',
+        message: `${emergency.type.charAt(0).toUpperCase() + emergency.type.slice(1)} heading ${direction.toLowerCase()} at ${target?.name}: ${direction === 'North' || direction === 'South' ? 'N-S' : 'E-W'} green held for ${Math.min(15, emergency.eta)}s.`,
+      }], netRef.current.t, describeKey));
+    }
     if (target && netRef.current) {
       const axis = direction === 'North' || direction === 'South' ? 'ns' : 'ew';
       preemptIntersection(netRef.current, target.id, axis, Math.min(15, emergency.eta));
@@ -233,6 +298,27 @@ export default function useNetworkSimulation() {
 
   const clearEmergency = (id) => {
     setEmergencyVehicles((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  /**
+   * Incident at an intersection: severity 'minor' (half capacity), 'major'
+   * (a quarter), or null to clear. Shown on the map and applied to both networks.
+   */
+  const INCIDENT_SHARE = { minor: 0.5, major: 0.25 };
+  const setIncident = (id, severity) => {
+    const share = severity ? INCIDENT_SHARE[severity] : null;
+    const next = intersectionsRef.current.map((i) => (i.id === id ? { ...i, incident: share, incidentSeverity: severity } : i));
+    commit(next);
+    for (const net of [netRef.current, baseRef.current]) {
+      if (net) setNetworkIncident(net, id, share);
+    }
+    setIncidents(next.filter((i) => i.incident).map((i) => ({
+      id: `incident-${i.id}`,
+      position: i.mapPos,
+      type: i.incidentSeverity === 'major' ? 'Major incident' : 'Minor incident',
+      severity: i.incidentSeverity,
+      description: `${i.name}: ${i.incidentSeverity === 'major' ? '75%' : '50%'} of capacity lost`,
+    })));
   };
 
   const updateWeather = (w) => {
@@ -260,10 +346,10 @@ export default function useNetworkSimulation() {
   return {
     isRunning, speed, elapsedTime, intersections, emergencyVehicles, incidents,
     transitPriority, weather, vehicleDistribution, networkMetrics, vehicles,
-    summary, baselineSummary, controlMode,
+    summary, baselineSummary, controlMode, roads, alerts,
     play, pause, reset, setSpeed, addIntersection, removeIntersection,
     toggleCoordination, toggleIntersectionStatus, triggerEmergency, clearEmergency,
     setTransitPriority: updateTransitPriority, updateWeather,
-    setVehicleDistribution: updateVehicleDistribution, setControlMode,
+    setVehicleDistribution: updateVehicleDistribution, setControlMode, setIncident,
   };
 }

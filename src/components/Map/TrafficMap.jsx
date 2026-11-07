@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
 import { Card } from '@/components/ui/card';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -56,6 +56,39 @@ function VehicleMarkers({ vehicles, isRunning }) {
   ));
 }
 
+function roadColor(level, blocked) {
+  if (blocked || level >= 0.85) return '#DC2626';
+  if (level >= 0.5) return '#F59E0B';
+  return '#16A34A';
+}
+
+/**
+ * Road segments coloured by how full they are. Each direction is drawn
+ * slightly offset to its own side so both are visible.
+ */
+function RoadSegments({ roads }) {
+  return roads.map((r) => {
+    const dLat = r.to[0] - r.from[0];
+    const dLon = r.to[1] - r.from[1];
+    const len = Math.hypot(dLat, dLon) || 1;
+    const k = 0.00007 / len; // perpendicular offset (right-hand side of travel)
+    const off = [-dLon * k, dLat * k];
+    const positions = [
+      [r.from[0] + off[0], r.from[1] + off[1]],
+      [r.to[0] + off[0], r.to[1] + off[1]],
+    ];
+    return (
+      <Polyline
+        key={r.id}
+        positions={positions}
+        pathOptions={{ color: roadColor(r.level, r.blocked), weight: 5, opacity: 0.8 }}
+      >
+        <Tooltip sticky>{r.label}</Tooltip>
+      </Polyline>
+    );
+  });
+}
+
 function MapUpdater({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -74,6 +107,7 @@ export default function TrafficMap({
   isRunning = false,
   center = [24.7112, 46.6741],
   jitter = true, // small random drift for decorative vehicles; off when positions come from a model
+  roads = [], // [{ id, from, to, level (0-1 of storage), blocked, label }]
 }) {
   const [localVehicles, setLocalVehicles] = useState(vehicles);
 
@@ -123,6 +157,9 @@ export default function TrafficMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapUpdater center={center} />
+
+        {/* Road segments by occupancy */}
+        <RoadSegments roads={roads} />
 
         {/* Traffic Light Intersections */}
         {defaultIntersections.map(intersection => (

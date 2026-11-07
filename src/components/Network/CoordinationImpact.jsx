@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Waves } from 'lucide-react';
 
+const MODE_LABELS = { coordinated: 'Green wave', adaptive: 'Adaptive', 'adaptive-platoon': 'Platoon-aware adaptive' };
+
 const DIR_LABELS = { south: 'Southbound', north: 'Northbound', east: 'Eastbound', west: 'Westbound' };
 
 function change(current, baseline) {
@@ -42,7 +44,7 @@ export default function CoordinationImpact({ controlMode, summary, baseline, ela
             Coordination Impact
           </span>
           <Badge variant="outline" className="text-xs">
-            {controlMode === 'adaptive' ? 'Adaptive' : 'Green wave'} vs uncoordinated
+            {MODE_LABELS[controlMode] || 'Green wave'} vs uncoordinated
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -85,9 +87,10 @@ export default function CoordinationImpact({ controlMode, summary, baseline, ela
           </>
         )}
         <p className="text-xs text-slate-500">
-          {controlMode === 'adaptive'
-            ? 'Each signal reacts to its own queues. This usually cuts delay, but signals ignore platoons coming from upstream.'
-            : 'Synchronized signals are offset by the travel time between them, so southbound and eastbound platoons arrive on green.'}
+          {{
+            adaptive: 'Each signal reacts to its own queues. This usually cuts delay, but signals ignore platoons coming from upstream.',
+            'adaptive-platoon': 'Each signal reacts to its own queues and also sees vehicles arriving from upstream in the next 8 s, holding green for them or changing early so they arrive on green.',
+          }[controlMode] || 'Synchronized signals are offset by the travel time between them, so southbound and eastbound platoons arrive on green.'}
         </p>
       </CardContent>
     </Card>

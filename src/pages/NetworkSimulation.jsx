@@ -12,6 +12,8 @@ import TrafficMap from '../components/Map/TrafficMap';
 import PublicTransitPriority from '../components/Transit/PublicTransitPriority';
 import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 import CoordinationImpact from '../components/Network/CoordinationImpact.jsx';
+import IncidentControl from '../components/Network/IncidentControl.jsx';
+import LiveAlerts from '../components/RealTime/LiveAlerts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function NetworkSimulation() {
@@ -57,6 +59,7 @@ export default function NetworkSimulation() {
             <SelectContent>
               <SelectItem value="coordinated">Fixed-time with green wave</SelectItem>
               <SelectItem value="adaptive">Adaptive (each signal on its own)</SelectItem>
+              <SelectItem value="adaptive-platoon">Adaptive + platoon-aware</SelectItem>
             </SelectContent>
           </Select>
           <span className="text-xs text-slate-500">
@@ -89,6 +92,7 @@ export default function NetworkSimulation() {
                   incidents={sim.incidents}
                   isRunning={sim.isRunning}
                   jitter={false}
+                  roads={sim.roads}
                 />
               </TabsContent>
             </Tabs>
@@ -102,6 +106,8 @@ export default function NetworkSimulation() {
               elapsedTime={sim.elapsedTime}
             />
             <LiveMetricsStream isActive={sim.isRunning} metrics={liveMetrics} />
+            <LiveAlerts isActive={sim.isRunning} alerts={sim.alerts} />
+            <IncidentControl intersections={sim.intersections} onChange={sim.setIncident} />
             <PublicTransitPriority
               isRunning={sim.isRunning}
               onPriorityChange={(enabled) => sim.setTransitPriority(enabled)}
