@@ -19,6 +19,9 @@ export const DEFAULT_DEMAND = 450;
 /** Start-up lost time at the beginning of each green, seconds (HCM default 2 s). */
 export const STARTUP_LOST_TIME_S = 2;
 
+/** Passenger-car equivalent of a truck or bus (HCM heavy-vehicle factor). */
+export const HEAVY_VEHICLE_PCE = 2;
+
 /** Average CO2 emitted by an idling passenger car, grams per second. */
 export const IDLE_CO2_G_PER_S = 0.64;
 
@@ -83,15 +86,37 @@ export function effectiveDemand({ demand = DEFAULT_DEMAND, timeOfDay = 'midday',
   );
 }
 
-export function createTrafficModel(options = {}) {
-  const { lanes = 1, weather = 'clear' } = options;
+/** HCM heavy-vehicle adjustment: f_HV = 1 / (1 + P_HV (E_T - 1)). */
+export function heavyVehicleFactor(heavyVehicleShare = 0) {
+  const p = Math.min(1, Math.max(0, heavyVehicleShare));
+  return 1 / (1 + p * (HEAVY_VEHICLE_PCE - 1));
+}
+
+function dischargeRate(lanes, weather, heavyVehicleShare = 0) {
   const capacityFactor = (WEATHER_FACTORS[weather] ?? WEATHER_FACTORS.clear).capacity;
+  return (SATURATION_FLOW_PER_LANE * lanes * capacityFactor * heavyVehicleFactor(heavyVehicleShare)) / 3600;
+}
+
+export function createTrafficModel(options = {}) {
+  const {
+    lanes = 1,
+    weather = 'clear',
+    timeOfDay = 'midday',
+    demand = DEFAULT_DEMAND,
+    heavyVehicleShare = 0,
+  } = options;
   return {
-    demand: effectiveDemand(options),
-    dischargePerSecond: (SATURATION_FLOW_PER_LANE * lanes * capacityFactor) / 3600,
+    baseDemand: demand,
+    lanes,
+    weather,
+    timeOfDay,
+    heavyVehicleShare,
+    demand: effectiveDemand({ demand, timeOfDay, weather }),
+    dischargePerSecond: dischargeRate(lanes, weather, heavyVehicleShare),
     approaches: Object.fromEntries(
-      DIRECTIONS.map((d) => [d, { queue: 0, credit: 0, arrived: 0, departed: 0, greenFor: 0 }])
+      DIRECTIONS.map((d) => [d, { queue: 0, credit: 0, arrived: 0, departed: 0, stopped: 0, greenFor: 0 }])
     ),
+    lastDepartures: { north: 0, south: 0, east: 0, west: 0 },
     elapsed: 0,
     totalDelay: 0, // vehicle-seconds spent waiting in queues
     greenSeconds: 0, // approach-seconds of green/yellow shown
@@ -100,22 +125,45 @@ export function createTrafficModel(options = {}) {
   };
 }
 
-/** Advance the model by one second under the given signal states. */
-export function stepTrafficModel(model, signalStates, rng = Math.random) {
+/** Same queues and history, new time of day and/or weather (e.g. weather changes mid-run). */
+export function withConditions(model, {
+  timeOfDay = model.timeOfDay,
+  weather = model.weather,
+  heavyVehicleShare = model.heavyVehicleShare,
+} = {}) {
+  return {
+    ...model,
+    timeOfDay,
+    weather,
+    heavyVehicleShare,
+    demand: effectiveDemand({ demand: model.baseDemand, timeOfDay, weather }),
+    dischargePerSecond: dischargeRate(model.lanes, weather, heavyVehicleShare),
+  };
+}
+
+/**
+ * Advance the model by one second under the given signal states.
+ * `extraArrivals` adds vehicles per approach on top of the random demand,
+ * e.g. a platoon arriving from an upstream intersection.
+ * A vehicle counts as stopped if it arrives on a non-green signal or behind a queue.
+ */
+export function stepTrafficModel(model, signalStates, rng = Math.random, extraArrivals = null) {
   let departedThisSecond = 0;
   let greenSeconds = 0;
   let usedGreenSeconds = 0;
   let delay = 0;
 
   const approaches = {};
+  const lastDepartures = {};
   for (const d of DIRECTIONS) {
     const a = model.approaches[d];
-    const arrivals = samplePoisson(model.demand[d] / 3600, rng);
+    const arrivals = samplePoisson(model.demand[d] / 3600, rng) + (extraArrivals?.[d] ?? 0);
+    const signal = signalStates[d];
+    const stoppedNow = signal !== 'green' || a.queue > 0 ? arrivals : 0;
     let queue = a.queue + arrivals;
     let credit = a.credit;
     let departed = 0;
 
-    const signal = signalStates[d];
     const showing = signal === 'green' || signal === 'yellow';
     const greenFor = showing ? a.greenFor + 1 : 0;
     if (showing) {
@@ -138,11 +186,13 @@ export function stepTrafficModel(model, signalStates, rng = Math.random) {
 
     delay += queue;
     departedThisSecond += departed;
+    lastDepartures[d] = departed;
     approaches[d] = {
       queue,
       credit,
       arrived: a.arrived + arrivals,
       departed: a.departed + departed,
+      stopped: (a.stopped ?? 0) + stoppedNow,
       greenFor,
     };
   }
@@ -153,6 +203,7 @@ export function stepTrafficModel(model, signalStates, rng = Math.random) {
   return {
     ...model,
     approaches,
+    lastDepartures,
     elapsed: model.elapsed + 1,
     totalDelay: model.totalDelay + delay,
     greenSeconds: model.greenSeconds + greenSeconds,
@@ -172,10 +223,12 @@ export function queueLengths(model) {
  * - queueLength: vehicles currently queued on all approaches
  * - efficiency: share of green time given to approaches with vehicles waiting (%)
  * - totalVehicles: vehicles that have cleared the intersection
+ * - stopRate: share of arriving vehicles that had to stop (%)
  */
 export function modelMetrics(model) {
   const arrived = DIRECTIONS.reduce((s, d) => s + model.approaches[d].arrived, 0);
   const departed = DIRECTIONS.reduce((s, d) => s + model.approaches[d].departed, 0);
+  const stopped = DIRECTIONS.reduce((s, d) => s + (model.approaches[d].stopped ?? 0), 0);
   const windowDepartures = model.recentDepartures.reduce((s, n) => s + n, 0);
   const windowSeconds = model.recentDepartures.length;
   return {
@@ -184,6 +237,7 @@ export function modelMetrics(model) {
     queueLength: DIRECTIONS.reduce((s, d) => s + model.approaches[d].queue, 0),
     efficiency: model.greenSeconds > 0 ? (model.usedGreenSeconds / model.greenSeconds) * 100 : 0,
     totalVehicles: departed,
+    stopRate: arrived > 0 ? (stopped / arrived) * 100 : 0,
   };
 }
 

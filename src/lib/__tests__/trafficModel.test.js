@@ -107,7 +107,7 @@ describe('queue dynamics', () => {
 describe('metrics', () => {
   it('returns zeros for a fresh model', () => {
     expect(modelMetrics(createTrafficModel())).toEqual({
-      avgWaitTime: 0, throughput: 0, queueLength: 0, efficiency: 0, totalVehicles: 0,
+      avgWaitTime: 0, throughput: 0, queueLength: 0, efficiency: 0, totalVehicles: 0, stopRate: 0,
     });
   });
 
@@ -134,5 +134,53 @@ describe('start-up lost time', () => {
     expect(m.approaches.north.departed).toBe(0);
     for (let i = 0; i < 4; i++) m = stepTrafficModel(m, NS_GREEN, rng);
     expect(m.approaches.north.departed > 0).toBe(true);
+  });
+});
+
+import { heavyVehicleFactor, withConditions } from '../trafficModel';
+
+describe('heavy vehicles', () => {
+  it('follows the HCM heavy-vehicle factor', () => {
+    expect(heavyVehicleFactor(0)).toBe(1);
+    expect(heavyVehicleFactor(0.25)).toBe(0.8); // 1 / (1 + 0.25 * (2 - 1))
+  });
+
+  it('reduces discharge rate when trucks and buses are present', () => {
+    const cars = createTrafficModel({ heavyVehicleShare: 0 });
+    const mixed = createTrafficModel({ heavyVehicleShare: 0.25 });
+    expect(mixed.dischargePerSecond).toBe(cars.dischargePerSecond * 0.8);
+  });
+});
+
+describe('changing conditions mid-run', () => {
+  it('keeps queues and history but updates demand and capacity', () => {
+    let m = run(createTrafficModel({ timeOfDay: 'rush-hour' }), ALL_RED, 60);
+    const queued = m.approaches.east.queue;
+    m = withConditions(m, { weather: 'storm', timeOfDay: 'night' });
+    expect(m.approaches.east.queue).toBe(queued);
+    expect(m.demand.east < DEFAULT_DEMAND).toBe(true);
+    expect(m.dischargePerSecond < 0.5).toBe(true);
+  });
+});
+
+describe('stops', () => {
+  it('counts every arrival on red as a stop', () => {
+    const m = run(createTrafficModel({ timeOfDay: 'rush-hour' }), ALL_RED, 300);
+    expect(modelMetrics(m).stopRate).toBe(100);
+  });
+
+  it('lets a vehicle reaching an empty approach on green pass without stopping', () => {
+    let m = createTrafficModel({ demand: 0 });
+    m = stepTrafficModel(m, NS_GREEN, createRng(1), { north: 1 });
+    expect(m.approaches.north.stopped).toBe(0);
+    expect(m.approaches.north.arrived).toBe(1);
+  });
+
+  it('reports departures per approach for the network model', () => {
+    let m = run(createTrafficModel({ demand: 2000 }), ALL_RED, 60);
+    const rng = createRng(4);
+    for (let i = 0; i < 6; i++) m = stepTrafficModel(m, NS_GREEN, rng);
+    expect(m.lastDepartures.east).toBe(0);
+    expect(typeof m.lastDepartures.north).toBe('number');
   });
 });
