@@ -118,3 +118,38 @@ export function approachTimings(signalStates, phaseTimer) {
     west: t(signalStates.west),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Fixed-time plans with custom splits and offsets (used for coordination)
+// ---------------------------------------------------------------------------
+
+/** A 4-phase plan in the same phase order as PHASE_CONFIGS. */
+export function makePlan({ nsGreen = 30, ewGreen = 25, yellow = 4 } = {}) {
+  return [
+    { ...PHASE_CONFIGS[0], duration: nsGreen },
+    { ...PHASE_CONFIGS[1], duration: yellow },
+    { ...PHASE_CONFIGS[2], duration: ewGreen },
+    { ...PHASE_CONFIGS[3], duration: yellow },
+  ];
+}
+
+export const planCycle = (plan) => plan.reduce((s, p) => s + p.duration, 0);
+
+/**
+ * Phase shown at simulation second `t` for a plan whose N-S green starts at
+ * `offset` seconds into every cycle. Returns { phase, remaining }.
+ */
+export function phaseAtTime(t, plan, offset = 0) {
+  const cycle = planCycle(plan);
+  let pos = (((t - offset) % cycle) + cycle) % cycle;
+  for (let i = 0; i < plan.length; i++) {
+    if (pos < plan[i].duration) return { phase: i, remaining: plan[i].duration - pos };
+    pos -= plan[i].duration;
+  }
+  return { phase: 0, remaining: plan[0].duration };
+}
+
+export function planStates(plan, phase) {
+  const { north, south, east, west } = plan[phase];
+  return { north, south, east, west };
+}

@@ -98,3 +98,25 @@ describe('adaptive control', () => {
     expect(initialAdaptiveState().phase).toBe(0);
   });
 });
+
+import { makePlan, planCycle, phaseAtTime } from '../signalTiming';
+
+describe('fixed-time plans with offsets', () => {
+  const plan = makePlan({ nsGreen: 30, ewGreen: 25, yellow: 4 });
+
+  it('matches the standard 63 s cycle', () => {
+    expect(planCycle(plan)).toBe(63);
+  });
+
+  it('finds the phase at any time, honouring the offset', () => {
+    expect(phaseAtTime(0, plan)).toEqual({ phase: 0, remaining: 30 });
+    expect(phaseAtTime(31, plan)).toEqual({ phase: 1, remaining: 3 });
+    expect(phaseAtTime(40, plan)).toEqual({ phase: 2, remaining: 19 });
+    expect(phaseAtTime(62, plan)).toEqual({ phase: 3, remaining: 1 });
+    // With a 10 s offset, N-S green starts at t = 10 (and t = 73, ...).
+    expect(phaseAtTime(10, plan, 10).phase).toBe(0);
+    expect(phaseAtTime(5, plan, 10).phase).toBe(2); // cycle second 58: still E-W green
+    expect(phaseAtTime(8, plan, 10).phase).toBe(3); // cycle second 61: E-W yellow
+    expect(phaseAtTime(73, plan, 10)).toEqual({ phase: 0, remaining: 30 });
+  });
+});
