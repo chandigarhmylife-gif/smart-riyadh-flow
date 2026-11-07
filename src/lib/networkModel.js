@@ -39,6 +39,16 @@ export const LINK_CONE_DEG = 35;
 export const MAX_LINK_KM = 2.5;
 /** Through lanes per approach: King Fahd Rd and Olaya St are multi-lane arterials. */
 export const DEFAULT_LANES = 2;
+/** Platoon-aware adaptive control looks this many seconds ahead for arriving vehicles. */
+export const PLATOON_LOOKAHEAD_S = 8;
+/** Road space per queued vehicle (m); moving vehicles take about 4x more. */
+export const QUEUED_VEHICLE_SPACING_M = 7.5;
+export const MOVING_VEHICLE_WEIGHT = 0.25;
+
+/** Vehicles a link can hold when stopped bumper to bumper. */
+export function linkStorage(lengthKm, lanes = DEFAULT_LANES) {
+  return Math.floor((lengthKm * 1000 * lanes) / QUEUED_VEHICLE_SPACING_M);
+}
 
 export const STANDARD_PLAN = makePlan({ nsGreen: 30, ewGreen: 25 });
 /** Bus priority: King Fahd Rd and Olaya St (N-S) carry the bus routes. */
@@ -129,9 +139,11 @@ export function greenWaveOffsets(nodes, links, plan = STANDARD_PLAN, weather = '
 
 /**
  * Create a network.
- * options: controlMode ('coordinated' | 'independent' | 'adaptive'), weather,
- * timeOfDay, demand (veh/h per boundary approach), transitPriority, seed.
+ * options: controlMode ('coordinated' | 'independent' | 'adaptive' |
+ * 'adaptive-platoon'), weather, timeOfDay, demand (veh/h per boundary
+ * approach), transitPriority, heavyVehicleShare, lanes, storageScale, seed.
  * In 'independent' mode every intersection ignores its sync setting.
+ * storageScale shrinks link storage (1 = real road length), mainly for tests.
  */
 export function createNetwork(nodes, options = {}) {
   const {
@@ -142,10 +154,16 @@ export function createNetwork(nodes, options = {}) {
     transitPriority = false,
     heavyVehicleShare = 0,
     lanes = DEFAULT_LANES,
+    storageScale = 1,
     seed = 1,
   } = options;
 
-  const links = buildLinks(nodes).map((l) => ({ ...l, pending: [] }));
+  const links = buildLinks(nodes).map((l) => ({
+    ...l,
+    pending: [],
+    storage: Math.max(1, Math.floor(linkStorage(l.lengthKm, lanes) * storageScale)),
+    spilledBack: false,
+  }));
   const plan = transitPriority ? TRANSIT_PRIORITY_PLAN : STANDARD_PLAN;
   const effectiveNodes = controlMode === 'independent'
     ? nodes.map((n) => ({ ...n, coordination: 'independent' }))
@@ -161,6 +179,9 @@ export function createNetwork(nodes, options = {}) {
     order: nodes.map((n) => n.id).sort((a, b) => a - b),
     preempt: {},
     platoon: { arrived: 0, stopped: 0, byDir: {} }, // vehicles arriving from upstream links
+    events: [], // spillback / incident events, newest last (each has a rising seq)
+    eventSeq: 0,
+    spillbackSeconds: 0,
     rng: createRng(seed), // arrivals: identical across control modes
     routeRng: createRng(seed + 1),
     nextVehicleId: 1,
@@ -183,6 +204,18 @@ export function createNetwork(nodes, options = {}) {
     };
   }
   return net;
+}
+
+/**
+ * Incident (crash, breakdown, roadworks) at an intersection: only
+ * `capacityShare` of its normal discharge rate gets through. Pass null to clear.
+ * Other conditions (weather, vehicle mix) still apply on top.
+ */
+export function setIncident(net, nodeId, capacityShare) {
+  const node = net.nodes[nodeId];
+  if (!node) return;
+  node.incident = capacityShare === null || capacityShare === undefined ? null : Math.min(1, Math.max(0.05, capacityShare));
+  recordEvent(net, { type: node.incident ? 'incident' : 'incident-cleared', node: nodeId });
 }
 
 /** Hold one axis green at an intersection, e.g. for an emergency vehicle. */
@@ -217,6 +250,48 @@ export function updateNodeSettings(net, nodes) {
   net.offsets = greenWaveOffsets(effective, net.links, net.plan, net.options.weather);
 }
 
+const MAX_EVENTS = 200;
+
+function recordEvent(net, event) {
+  net.eventSeq += 1;
+  net.events.push({ seq: net.eventSeq, t: net.t, ...event });
+  if (net.events.length > MAX_EVENTS) net.events.shift();
+}
+
+/** Events newer than `afterSeq` (use the last seq you've seen). */
+export function eventsSince(net, afterSeq) {
+  return net.events.filter((e) => e.seq > afterSeq);
+}
+
+/** Vehicles on links due at `nodeId` within `seconds`, per arrival approach. */
+export function incomingWithin(net, nodeId, seconds) {
+  const out = { north: 0, south: 0, east: 0, west: 0 };
+  for (const link of net.links) {
+    if (link.to !== nodeId) continue;
+    const approach = OPPOSITE[link.dir];
+    for (const v of link.pending) if (v.arriveAt - net.t <= seconds) out[approach] += 1;
+  }
+  return out;
+}
+
+/** Link occupancy in queued-vehicle equivalents: downstream queue plus moving vehicles. */
+export function linkOccupancy(net, link) {
+  const downstream = net.nodes[link.to]?.model.approaches[OPPOSITE[link.dir]].queue ?? 0;
+  return downstream + link.pending.length * MOVING_VEHICLE_WEIGHT;
+}
+
+/** Update spillback flags and record start/clear events. */
+function updateSpillback(net) {
+  for (const link of net.links) {
+    const full = linkOccupancy(net, link) >= link.storage;
+    if (full !== link.spilledBack) {
+      link.spilledBack = full;
+      recordEvent(net, { type: full ? 'spillback' : 'spillback-cleared', from: link.from, to: link.to, dir: link.dir });
+    }
+    if (full) net.spillbackSeconds += 1;
+  }
+}
+
 function signalFor(net, node) {
   const pre = net.preempt[node.id];
   if (pre && pre.until > net.t) {
@@ -227,11 +302,13 @@ function signalFor(net, node) {
     // Signal switched off: treated as uncontrolled, every approach may proceed.
     return { north: 'green', south: 'green', east: 'green', west: 'green' };
   }
-  if (net.options.controlMode === 'adaptive') {
+  const mode = net.options.controlMode;
+  if (mode === 'adaptive' || mode === 'adaptive-platoon') {
     const limits = net.options.transitPriority && node.adaptive.phase === 0
       ? { ...ADAPTIVE_LIMITS, maxGreen: ADAPTIVE_LIMITS.maxGreen + 10 }
       : ADAPTIVE_LIMITS;
-    const next = tickSignalAdaptive(node.adaptive, queueLengths(node.model), limits);
+    const incoming = mode === 'adaptive-platoon' ? incomingWithin(net, node.id, PLATOON_LOOKAHEAD_S) : null;
+    const next = tickSignalAdaptive(node.adaptive, queueLengths(node.model), limits, incoming);
     node.adaptive = { phase: next.phase, phaseTimer: next.phaseTimer, greenElapsed: next.greenElapsed ?? 0 };
     return signalStatesFor(next.phase);
   }
@@ -253,10 +330,20 @@ export function stepNetwork(net) {
     extra[link.to][approach] = (extra[link.to][approach] || 0) + due.length;
   }
 
+  updateSpillback(net);
+
   // 2. Step every intersection.
   for (const id of net.order) {
     const node = net.nodes[id];
     node.states = signalFor(net, node);
+
+    // Spillback: an approach whose outgoing link is full can't discharge,
+    // whatever its signal shows.
+    let modelStates = node.states;
+    for (const d of DIRECTIONS) {
+      const out = net.links.find((l) => l.from === id && l.dir === OPPOSITE[d]);
+      if (out?.spilledBack && modelStates[d] !== 'red') modelStates = { ...modelStates, [d]: 'red' };
+    }
     if (extra[id] && node.status !== 'inactive') {
       for (const [approach, n] of Object.entries(extra[id])) {
         const stops = node.states[approach] !== 'green' || node.model.approaches[approach].queue > 0;
@@ -270,7 +357,13 @@ export function stepNetwork(net) {
         }
       }
     }
-    node.model = stepTrafficModel(node.model, node.states, net.rng, extra[id]);
+    if (node.incident) {
+      const normal = node.model.dischargePerSecond;
+      node.model = stepTrafficModel({ ...node.model, dischargePerSecond: normal * node.incident }, modelStates, net.rng, extra[id]);
+      node.model.dischargePerSecond = normal;
+    } else {
+      node.model = stepTrafficModel(node.model, modelStates, net.rng, extra[id]);
+    }
 
     // 3. Send departures down the outgoing link in their direction of travel.
     for (const d of DIRECTIONS) {
@@ -334,6 +427,8 @@ export function networkSummary(net, { activeOnly = true } = {}) {
       Object.entries(p.byDir).map(([d, v]) => [d, v.arrived > 0 ? (v.stopped / v.arrived) * 100 : 0])
     ),
     vehiclesInTransit: net.links.reduce((s, l) => s + l.pending.length, 0),
+    spillbackLinks: net.links.filter((l) => l.spilledBack).length,
+    spillbackSeconds: net.spillbackSeconds,
   };
 }
 
@@ -361,4 +456,23 @@ export function vehiclePositions(net, max = 80) {
     }
   }
   return out;
+}
+
+/** Road segments for the map: how full each link is and whether it has spilled back. */
+export function roadStates(net) {
+  const DIR = { north: 'northbound', south: 'southbound', east: 'eastbound', west: 'westbound' };
+  return net.links.map((l) => {
+    const from = net.nodes[l.from];
+    const to = net.nodes[l.to];
+    const occupancy = linkOccupancy(net, l);
+    const level = Math.min(1, occupancy / l.storage);
+    return {
+      id: `${l.from}-${l.to}`,
+      from: from.mapPos,
+      to: to.mapPos,
+      level,
+      blocked: l.spilledBack,
+      label: `${from.name} → ${to.name} (${DIR[l.dir]}): ${Math.round(level * 100)}% full${l.spilledBack ? ', spilled back' : ''}`,
+    };
+  });
 }

@@ -120,3 +120,35 @@ describe('fixed-time plans with offsets', () => {
     expect(phaseAtTime(73, plan, 10)).toEqual({ phase: 0, remaining: 30 });
   });
 });
+
+describe('platoon-aware and pedestrian limits', () => {
+  const L = ADAPTIVE_LIMITS;
+  const greenAt = (greenElapsed) => ({ phase: 0, phaseTimer: L.maxGreen - greenElapsed, greenElapsed });
+  const none = { north: 0, south: 0, east: 0, west: 0 };
+
+  it('holds green for a platoon about to arrive on the served approach', () => {
+    const queues = { north: 0, south: 0, east: 5, west: 0 };
+    expect(tickSignalAdaptive(greenAt(L.minGreen), queues).reason).toBe('gap-out');
+    const held = tickSignalAdaptive(greenAt(L.minGreen), queues, L, { ...none, north: 6 });
+    expect(held.changed).toBe(false);
+  });
+
+  it('changes early for a platoon approaching on the cross street', () => {
+    const queues = { north: 0, south: 0, east: 0, west: 0 };
+    expect(tickSignalAdaptive(greenAt(L.minGreen), queues).changed).toBe(false); // rests in green
+    const s = tickSignalAdaptive(greenAt(L.minGreen), queues, L, { ...none, east: 4 });
+    expect(s).toMatchObject({ changed: true, reason: 'gap-out' });
+  });
+
+  it('still maxes out even with a platoon coming', () => {
+    const s = tickSignalAdaptive(greenAt(L.maxGreen - 1), { north: 0, south: 0, east: 9, west: 0 }, L, { ...none, north: 6 });
+    expect(s.reason).toBe('max-out');
+  });
+
+  it('respects a raised minimum green for a pedestrian call', () => {
+    const limits = { ...L, minGreenByPhase: { 0: 24 } };
+    const queues = { north: 0, south: 0, east: 8, west: 0 };
+    expect(tickSignalAdaptive(greenAt(15), queues, limits).changed).toBe(false);
+    expect(tickSignalAdaptive(greenAt(23), queues, limits).reason).toBe('gap-out');
+  });
+});

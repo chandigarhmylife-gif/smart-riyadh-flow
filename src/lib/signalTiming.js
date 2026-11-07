@@ -70,10 +70,19 @@ export function initialAdaptiveState(limits = ADAPTIVE_LIMITS) {
  * (max-out), but only if traffic is waiting on the cross street; otherwise the
  * green rests where it is. Yellow phases keep their fixed duration.
  *
+ * Optional `incoming` gives vehicles about to arrive per approach (e.g. a
+ * platoon from the upstream signal). When provided, the controller is
+ * platoon-aware: it won't gap out while a platoon is about to reach the
+ * served approaches, and an imminent platoon on the cross street counts as
+ * waiting traffic so the signal can change before it arrives.
+ *
+ * `limits.minGreenByPhase` can raise the minimum green for one phase, e.g.
+ * to give pedestrians time to cross.
+ *
  * Returns { phase, phaseTimer, greenElapsed, changed, reason } where reason is
  * 'gap-out' | 'max-out' | 'yellow-end' | null.
  */
-export function tickSignalAdaptive(state, queues, limits = ADAPTIVE_LIMITS) {
+export function tickSignalAdaptive(state, queues, limits = ADAPTIVE_LIMITS, incoming = null) {
   const { phase } = state;
 
   if (!isGreenPhase(phase)) {
@@ -87,11 +96,14 @@ export function tickSignalAdaptive(state, queues, limits = ADAPTIVE_LIMITS) {
   const greenElapsed = state.greenElapsed + 1;
   const served = sumQueues(queues, SERVED[phase]);
   const opposing = sumQueues(queues, OPPOSING[phase]);
+  const servedSoon = incoming ? sumQueues(incoming, SERVED[phase]) : 0;
+  const opposingSoon = incoming ? sumQueues(incoming, OPPOSING[phase]) : 0;
+  const minGreen = limits.minGreenByPhase?.[phase] ?? limits.minGreen;
 
   let reason = null;
-  if (greenElapsed >= limits.minGreen && opposing > 0) {
+  if (greenElapsed >= minGreen && opposing + opposingSoon > 0) {
     if (greenElapsed >= limits.maxGreen) reason = 'max-out';
-    else if (served <= limits.gapQueue) reason = 'gap-out';
+    else if (served <= limits.gapQueue && servedSoon === 0) reason = 'gap-out';
   }
 
   if (reason) {

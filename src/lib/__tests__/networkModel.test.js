@@ -148,3 +148,77 @@ describe('network simulation', () => {
     expect(TRANSIT_PRIORITY_PLAN[0].duration > STANDARD_PLAN[0].duration).toBe(true);
   });
 });
+
+import { setIncident, eventsSince, incomingWithin, linkStorage, roadStates } from '../networkModel';
+
+describe('platoon-aware adaptive control', () => {
+  it('stops far fewer platoons than plain adaptive control', () => {
+    const plain = averageOverSeeds('adaptive');
+    const platoon = averageOverSeeds('adaptive-platoon');
+    expect(platoon.platoonStopRate < plain.platoonStopRate - 20).toBe(true);
+  });
+
+  it('keeps delay below the fixed-time green wave', () => {
+    const platoon = averageOverSeeds('adaptive-platoon');
+    const wave = averageOverSeeds('coordinated');
+    expect(platoon.avgDelay < wave.avgDelay).toBe(true);
+  });
+
+  it('sees vehicles due within the look-ahead window', () => {
+    const net = runFor(NODES, { seed: 4 }, 600);
+    const soon = incomingWithin(net, 3, 8);
+    const later = incomingWithin(net, 3, 1000);
+    const total = (o) => Object.values(o).reduce((s, n) => s + n, 0);
+    expect(total(later) >= total(soon)).toBe(true);
+    expect(total(later) > 0).toBe(true);
+  });
+});
+
+describe('incidents and spillback', () => {
+  it('sizes link storage from road length and lanes', () => {
+    expect(linkStorage(0.5, 2)).toBe(133); // 1000 m of lane / 7.5 m per vehicle
+  });
+
+  it('an incident builds a queue that spills back and blocks the upstream signal', () => {
+    const net = createNetwork(NODES, { seed: 3, storageScale: 0.1 });
+    for (let t = 0; t < 300; t++) stepNetwork(net);
+    setIncident(net, 4, 0.25);
+    for (let t = 0; t < 1500; t++) stepNetwork(net);
+    const s = networkSummary(net);
+    expect(s.spillbackSeconds > 0).toBe(true);
+    const kinds = eventsSince(net, 0).map((e) => e.type);
+    expect(kinds).toContain('incident');
+    expect(kinds).toContain('spillback');
+  });
+
+  it('spillback clears once the incident is removed', () => {
+    const net = createNetwork(NODES, { seed: 3, storageScale: 0.1 });
+    setIncident(net, 4, 0.25);
+    for (let t = 0; t < 1800; t++) stepNetwork(net);
+    setIncident(net, 4, null);
+    for (let t = 0; t < 2400; t++) stepNetwork(net);
+    expect(networkSummary(net).spillbackLinks).toBe(0);
+    expect(eventsSince(net, 0).map((e) => e.type)).toContain('spillback-cleared');
+  });
+
+  it('does not spill back under normal traffic on real road lengths', () => {
+    const net = runFor(NODES, { seed: 5 }, 1800);
+    expect(networkSummary(net).spillbackSeconds).toBe(0);
+  });
+
+  it('reports each event once using sequence numbers', () => {
+    const net = createNetwork(NODES, { seed: 1 });
+    setIncident(net, 2, 0.5);
+    const first = eventsSince(net, 0);
+    expect(first.length).toBe(1);
+    expect(eventsSince(net, first[0].seq)).toEqual([]);
+  });
+
+  it('describes road occupancy for the map', () => {
+    const net = runFor(NODES, { seed: 2 }, 300);
+    const roads = roadStates(net);
+    expect(roads.length).toBe(8);
+    expect(roads.every((r) => r.level >= 0 && r.level <= 1)).toBe(true);
+    expect(roads[0].label).toMatch(/→/);
+  });
+});
