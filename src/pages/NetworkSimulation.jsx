@@ -14,6 +14,7 @@ import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 import CoordinationImpact from '../components/Network/CoordinationImpact.jsx';
 import IncidentControl from '../components/Network/IncidentControl.jsx';
 import LiveAlerts from '../components/RealTime/LiveAlerts';
+import StrategyLab from '../components/Network/StrategyLab.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function NetworkSimulation() {
@@ -127,6 +128,17 @@ export default function NetworkSimulation() {
             throughput: sim.networkMetrics.throughput,
             efficiency: sim.networkMetrics.efficiency,
             queueLength: liveMetrics.queueLength
+          }}
+        />
+
+        <StrategyLab
+          nodes={sim.intersections}
+          conditions={{
+            weather: sim.weather.condition,
+            transitPriority: sim.transitPriority,
+            heavyVehicleShare: ((sim.vehicleDistribution.truck || 0) + (sim.vehicleDistribution.bus || 0)) / 100,
+            timeOfDay: 'rush-hour',
+            incidents: sim.intersections.filter(i => i.incident).map(i => ({ id: i.id, share: i.incident })),
           }}
         />
 
