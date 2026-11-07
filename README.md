@@ -13,6 +13,10 @@ The project is early-stage and under active development. See the [roadmap](#road
 - **3D intersection simulator.** A real-time three.js view of a four-approach intersection with live signal phases, queued vehicles, and per-approach countdowns.
 - **Corridor network simulation.** Four linked intersections on King Fahd Rd and Olaya St (at Al Urubah and Tahlia). Vehicles leaving one signal drive to the next at road speed and join its queue, and moving vehicles are shown on the live map.
 - **Green-wave coordination.** Synchronized signals are offset by the travel time between them, so southbound and eastbound platoons arrive on green. A "Coordination Impact" panel compares the run with uncoordinated signals on identical traffic: delay, share of vehicles stopping, and platoon stops by direction.
+- **Platoon-aware adaptive control.** Adaptive signals that also see vehicles arriving from the previous intersection in the next 8 s. They hold green for an approaching platoon, or change early so it arrives on green.
+- **Incidents and queue spillback.** Place a minor or major incident at an intersection to cut its capacity. When a queue fills the road back to the previous signal, it spills back and blocks that signal's traffic, as in real gridlock. Roads on the map are coloured green, orange or red by how full they are.
+- **Real alerts.** The Live Alerts panels report actual events: queues building and clearing (with hysteresis so alerts don't flicker), spillback, incidents and emergency pre-emption, stamped with simulation time.
+- **Pedestrian crossings.** Push-button pedestrian demand (none, low or high). A call makes the next adaptive green for that crossing last at least 24 s (7 s walk + 20 m at 1.2 m/s).
 - **Network controls with real effects.** Weather slows traffic and reduces capacity. Bus priority gives the King Fahd / Olaya bus corridors a longer green. The vehicle mix applies the HCM heavy-vehicle factor. Emergency vehicles pre-empt the signal at an intersection, and a switched-off signal becomes an uncontrolled junction.
 - **Run timeline and CSV export.** Charts wait time and queues over the run, alongside the fixed-time baseline in adaptive mode. Every 10 s sample can be exported as CSV with the run settings.
 - **Repeatable runs.** Every run has a seed. Enter it again to replay exactly the same traffic, for example to compare control strategies fairly.
@@ -28,9 +32,9 @@ The project is early-stage and under active development. See the [roadmap](#road
 
 These are listed openly so contributors know where help is most useful:
 
-- The models don't yet include turning movements, pedestrians, or queue spillback blocking an upstream intersection. Parameters use textbook defaults rather than values calibrated to Riyadh counts.
+- The models don't yet include separate turning lanes or pedestrian delay. Spillback blocks a whole approach rather than only its through movement. Parameters use textbook defaults rather than values calibrated to Riyadh counts.
 - The green wave favours southbound and eastbound traffic; northbound and westbound get whatever progression the same offsets give them.
-- Some panels (live alerts, the bus feed in Transit Priority, the Dashboard's demo metrics) are still illustrative.
+- Some panels (the bus feed in Transit Priority, the Dashboard's demo metrics and alerts) are still illustrative and labelled as demo feeds.
 - Intersection coordinates are **approximate** and the network is a small demo corridor, not the full Riyadh road graph.
 - The operations screens (incidents, devices, models, users) use sample data and are not yet persisted.
 
@@ -58,8 +62,11 @@ These are listed openly so contributors know where help is most useful:
 | Side-street demand | 15% | Extra demand on approaches fed by an upstream signal |
 | Bus priority plan | 35 s N-S / 20 s E-W | Versus 30 s / 25 s normally |
 | Linking rule | Nearest neighbour within 35° of a compass axis, up to 2.5 km | |
+| Link storage | lane length ÷ 7.5 m per queued vehicle | Moving vehicles count as ¼ of a queued one. A full link blocks the upstream approach (spillback) |
+| Platoon look-ahead | 8 s | For platoon-aware adaptive control |
+| Incidents | Minor −50%, major −75% capacity | |
 
-Across six 15-minute runs, the green wave cut platoon stops from about **60% to 38%** (southbound from 100% to about 30%) and average delay by about 10–20%, compared with uncoordinated fixed-time signals. Isolated adaptive control gave the lowest average delay but stopped most platoons, a known trade-off between local actuation and corridor coordination. As before, these are results *within this model*.
+Across six 15-minute runs, the green wave cut platoon stops from about **60% to 38%** (southbound from 100% to about 30%) and average delay by about 10–20%, compared with uncoordinated fixed-time signals. Isolated adaptive control cut delay further but stopped most platoons (about 88%), a known trade-off between local actuation and corridor coordination. **Platoon-aware adaptive control** removed most of that trade-off: lowest average delay of all modes (about 5.3 s against 8.4 s for the green wave and 9.3 s uncoordinated) with platoon stops down to about 50%. As before, these are results *within this model*.
 
 **Efficiency** is the share of green time given to approaches that have vehicles waiting, i.e. green that isn't wasted on an empty road. **Average wait** is total queueing delay divided by vehicles arrived.
 
@@ -121,6 +128,7 @@ src/
     trafficModel.js    Queue-based traffic model and KPIs (pure, tested)
     networkModel.js    Linked-intersection corridor model and green waves (pure, tested)
     csv.js             CSV export helper (tested)
+    alerts.js          Alert rules and messages (tested)
     signalTiming.js    Fixed-time and adaptive signal controllers (pure, tested)
     networkMetrics.js  Network KPI aggregation (pure, tested)
     trafficData.js     CSV/JSON parsing and validation (pure, tested)
@@ -133,8 +141,10 @@ base44/entities/    Data model (TrafficScenario)
 - [x] Adaptive (queue-actuated) signal control benchmarked against the fixed-time plan
 - [ ] Turning movements, multiple lanes and pedestrian phases
 - [x] Extend the queue model to the multi-intersection network, with green-wave coordination
-- [ ] Coordinated adaptive control (adaptive signals that respect upstream platoons)
-- [ ] Queue spillback between closely spaced intersections
+- [x] Coordinated adaptive control (adaptive signals that respect upstream platoons)
+- [x] Queue spillback between closely spaced intersections
+- [x] Incidents and pedestrian push-button calls
+- [ ] Separate turning lanes and protected turn phases
 - [ ] Calibrate demand and saturation flow against real Riyadh counts
 - [ ] Import the real Riyadh road network from OpenStreetMap
 - [ ] Persist incidents, devices and alerts
