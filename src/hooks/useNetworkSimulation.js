@@ -1,16 +1,41 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { computeNetworkMetrics } from '@/lib/networkMetrics';
+import {
+  createNetwork,
+  stepNetwork,
+  intersectionMetrics,
+  networkSummary,
+  vehiclePositions,
+  preemptIntersection,
+  setNetworkConditions,
+  setTransitPriority as setNetworkTransitPriority,
+  updateNodeSettings,
+} from '@/lib/networkModel';
+
+const EMPTY_STATS = { waitTime: 0, throughput: 0, queueLength: 0, efficiency: 0, stopRate: 0 };
 
 const DEFAULT_INTERSECTIONS = [
-  { id: 1, name: 'King Fahd / Al Urubah', status: 'active', coordination: 'synchronized', efficiency: 85, signalState: 'green', position: { x: 120, y: 80 }, mapPos: [24.7112, 46.6741], waitTime: 32, throughput: 180, queueLength: 4 },
-  { id: 2, name: 'Olaya / Al Urubah', status: 'active', coordination: 'synchronized', efficiency: 82, signalState: 'red', position: { x: 350, y: 80 }, mapPos: [24.7128, 46.6788], waitTime: 38, throughput: 160, queueLength: 6 },
-  { id: 3, name: 'King Fahd / Tahlia', status: 'active', coordination: 'independent', efficiency: 74, signalState: 'green', position: { x: 120, y: 220 }, mapPos: [24.6993, 46.6806], waitTime: 45, throughput: 140, queueLength: 8 },
-  { id: 4, name: 'Olaya / Tahlia', status: 'active', coordination: 'synchronized', efficiency: 80, signalState: 'yellow', position: { x: 350, y: 220 }, mapPos: [24.7009, 46.6852], waitTime: 36, throughput: 155, queueLength: 5 },
+  { id: 1, name: 'King Fahd / Al Urubah', status: 'active', coordination: 'synchronized', signalState: 'green', position: { x: 120, y: 80 }, mapPos: [24.7112, 46.6741], ...EMPTY_STATS },
+  { id: 2, name: 'Olaya / Al Urubah', status: 'active', coordination: 'synchronized', signalState: 'red', position: { x: 350, y: 80 }, mapPos: [24.7128, 46.6788], ...EMPTY_STATS },
+  { id: 3, name: 'King Fahd / Tahlia', status: 'active', coordination: 'synchronized', signalState: 'green', position: { x: 120, y: 220 }, mapPos: [24.6993, 46.6806], ...EMPTY_STATS },
+  { id: 4, name: 'Olaya / Tahlia', status: 'active', coordination: 'synchronized', signalState: 'yellow', position: { x: 350, y: 220 }, mapPos: [24.7009, 46.6852], ...EMPTY_STATS },
 ];
 
-const SIGNAL_CYCLE = ['green', 'yellow', 'red', 'red'];
-const SIGNAL_DURATIONS = { green: 4, yellow: 1, red: 3 }; // in ticks
+const EMPTY_SUMMARY = { avgDelay: 0, stopRate: 0, platoonStopRate: 0, platoonStopRateByDir: {}, vehiclesInTransit: 0 };
 
+/** Weather options from the WeatherImpact panel mapped to model conditions. */
+const WEATHER_IMPACT = { clear: 0, cloudy: 5, rain: 20, 'heavy-rain': 40, snow: 50, fog: 30 };
+
+/**
+ * Multi-intersection simulation on the corridor network model.
+ *
+ * controlMode:
+ *  - 'coordinated': fixed-time plans; synchronized intersections share a green wave
+ *  - 'adaptive': every intersection runs queue-actuated control on its own
+ *
+ * A baseline network with uncoordinated fixed-time signals runs alongside on
+ * identical arrivals, so the benefit of coordination or adaptive control is measured.
+ */
 export default function useNetworkSimulation() {
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -22,185 +47,223 @@ export default function useNetworkSimulation() {
   const [weather, setWeather] = useState({ condition: 'clear', impact: 0 });
   const [vehicleDistribution, setVehicleDistribution] = useState({ car: 70, truck: 15, bus: 10, emergency: 5 });
   const [networkMetrics, setNetworkMetrics] = useState({ efficiency: 0, throughput: 0, waitTime: 0, synchronized: 0, total: 0 });
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [baselineSummary, setBaselineSummary] = useState(null);
   const [vehicles, setVehicles] = useState([]);
+  const [controlMode, setControlModeState] = useState('coordinated');
 
-  const tickRef = useRef(0);
-  const signalTimers = useRef({});
+  const netRef = useRef(null);
+  const baseRef = useRef(null);
+  const intersectionsRef = useRef(intersections);
+  intersectionsRef.current = intersections;
+  const settingsRef = useRef({});
+  settingsRef.current = {
+    controlMode,
+    weather: weather.condition,
+    transitPriority,
+    heavyVehicleShare: ((vehicleDistribution.truck || 0) + (vehicleDistribution.bus || 0)) / 100,
+  };
+  const emergencyTimeouts = useRef([]);
 
-  const computeMetrics = useCallback((ints) => computeNetworkMetrics(ints), []);
-
-  // Generate simulated vehicles on the map
-  useEffect(() => {
-    const mapInts = intersections.filter(i => i.mapPos);
-    if (mapInts.length === 0) return;
-    const center = mapInts[0].mapPos;
-    const initialVehicles = Array.from({ length: 8 }, (_, i) => ({
-      id: i + 1,
-      position: [center[0] + (Math.random() - 0.5) * 0.008, center[1] + (Math.random() - 0.5) * 0.008],
-      direction: ['North', 'South', 'East', 'West'][i % 4],
-      speed: 20 + Math.random() * 20,
-      type: 'car'
-    }));
-    setVehicles(initialVehicles);
+  /** (Re)build the network and its uncoordinated baseline from current settings. */
+  const buildNetworks = useCallback((nodes = intersectionsRef.current) => {
+    const s = settingsRef.current;
+    const seed = Math.floor(Math.random() * 1e9);
+    const common = {
+      weather: s.weather,
+      transitPriority: s.transitPriority,
+      heavyVehicleShare: s.heavyVehicleShare,
+      timeOfDay: 'rush-hour',
+      seed,
+    };
+    netRef.current = createNetwork(nodes, { ...common, controlMode: s.controlMode });
+    baseRef.current = createNetwork(nodes, { ...common, controlMode: 'independent' });
   }, []);
 
-  // Main simulation tick
+  // Main loop: one simulated second per tick.
   useEffect(() => {
-    if (!isRunning) return;
-
+    if (!isRunning) return undefined;
     const interval = setInterval(() => {
-      tickRef.current += 1;
-      setElapsedTime(prev => prev + 1);
+      if (!netRef.current) buildNetworks();
+      stepNetwork(netRef.current);
+      stepNetwork(baseRef.current);
 
-      // Weather impact factor (0 to 0.5 delay multiplier)
-      const weatherFactor = weather.impact / 100;
-      // Transit priority bonus
-      const transitBonus = transitPriority ? 0.05 : 0;
-      // Emergency penalty
-      const emergencyPenalty = emergencyVehicles.length > 0 ? 0.08 : 0;
-
-      setIntersections(prev => prev.map(intersection => {
-        if (intersection.status !== 'active') return intersection;
-
-        // Cycle signals
-        const timer = signalTimers.current[intersection.id] || 0;
-        const currentSignal = intersection.signalState;
-        const duration = SIGNAL_DURATIONS[currentSignal] || 3;
-        let newSignal = currentSignal;
-        let newTimer = timer + 1;
-
-        if (newTimer >= duration) {
-          newTimer = 0;
-          const idx = SIGNAL_CYCLE.indexOf(currentSignal);
-          newSignal = SIGNAL_CYCLE[(idx + 1) % SIGNAL_CYCLE.length];
-        }
-        signalTimers.current[intersection.id] = newTimer;
-
-        // Synchronized intersections get efficiency boost
-        const syncBonus = intersection.coordination === 'synchronized' ? 5 : 0;
-        const baseEfficiency = intersection.efficiency;
-        const drift = (Math.random() - 0.45) * 3 + syncBonus * 0.05 + transitBonus * 10 - weatherFactor * 10 - emergencyPenalty * 10;
-        const newEfficiency = Math.max(50, Math.min(99, baseEfficiency + drift));
-
-        const baseThroughput = intersection.throughput;
-        const tDrift = (Math.random() - 0.45) * 8 - weatherFactor * 30 + (transitBonus * 20) + syncBonus * 0.5;
-        const newThroughput = Math.max(80, Math.min(250, baseThroughput + tDrift));
-
-        const baseWait = intersection.waitTime;
-        const wDrift = (Math.random() - 0.55) * 3 + weatherFactor * 5 - transitBonus * 5 - syncBonus * 0.3 + emergencyPenalty * 5;
-        const newWait = Math.max(15, Math.min(80, baseWait + wDrift));
-
-        const baseQueue = intersection.queueLength;
-        const qDrift = Math.round((Math.random() - 0.55) * 2 + weatherFactor * 2 - transitBonus * 2);
-        const newQueue = Math.max(0, Math.min(25, baseQueue + qDrift));
-
-        return {
-          ...intersection,
-          signalState: newSignal,
-          efficiency: Math.round(newEfficiency),
-          throughput: Math.round(newThroughput),
-          waitTime: Math.round(newWait),
-          queueLength: Math.max(0, newQueue)
-        };
-      }));
-
-      // Move vehicles on map
-      setVehicles(prev => prev.map(v => ({
-        ...v,
-        position: [
-          v.position[0] + (Math.random() - 0.5) * 0.0003,
-          v.position[1] + (Math.random() - 0.5) * 0.0003
-        ],
-        speed: Math.max(5, Math.min(45, v.speed + (Math.random() - 0.5) * 5 - weatherFactor * 10))
-      })));
-
-    }, 1000 / speed);
-
+      const byId = Object.fromEntries(intersectionMetrics(netRef.current).map((m) => [m.id, m]));
+      setIntersections((prev) => {
+        const next = prev.map((i) => (byId[i.id] ? { ...i, ...byId[i.id], id: i.id } : i));
+        intersectionsRef.current = next;
+        return next;
+      });
+      setSummary(networkSummary(netRef.current));
+      setBaselineSummary(networkSummary(baseRef.current));
+      setVehicles(vehiclePositions(netRef.current));
+      setElapsedTime((t) => t + 1);
+    }, Math.max(50, 1000 / speed));
     return () => clearInterval(interval);
-  }, [isRunning, speed, weather, transitPriority, emergencyVehicles.length]);
+  }, [isRunning, speed, buildNetworks]);
 
-  // Recompute aggregate metrics when intersections change
+  // Aggregate KPIs whenever intersection data changes.
   useEffect(() => {
-    setNetworkMetrics(computeMetrics(intersections));
-  }, [intersections, computeMetrics]);
+    setNetworkMetrics({ ...computeNetworkMetrics(intersections), stopRate: Math.round(summary.stopRate) });
+  }, [intersections, summary.stopRate]);
 
-  const play = () => setIsRunning(true);
+  useEffect(() => () => emergencyTimeouts.current.forEach(clearTimeout), []);
+
+  const play = () => {
+    if (!netRef.current) buildNetworks();
+    setIsRunning(true);
+  };
   const pause = () => setIsRunning(false);
+
   const reset = () => {
     setIsRunning(false);
     setElapsedTime(0);
-    tickRef.current = 0;
-    signalTimers.current = {};
-    setIntersections(DEFAULT_INTERSECTIONS);
+    netRef.current = null;
+    baseRef.current = null;
+    emergencyTimeouts.current.forEach(clearTimeout);
+    emergencyTimeouts.current = [];
+    setIntersections((prev) => prev.map((i) => ({ ...i, ...EMPTY_STATS })));
+    setSummary(EMPTY_SUMMARY);
+    setBaselineSummary(null);
+    setVehicles([]);
     setEmergencyVehicles([]);
     setIncidents([]);
   };
 
+  /** Changing the controller restarts the run so statistics aren't mixed. */
+  const setControlMode = (mode) => {
+    settingsRef.current.controlMode = mode;
+    setControlModeState(mode);
+    netRef.current = null;
+    baseRef.current = null;
+    setElapsedTime(0);
+    setSummary(EMPTY_SUMMARY);
+    setBaselineSummary(null);
+    setVehicles([]);
+    setIntersections((prev) => prev.map((i) => ({ ...i, ...EMPTY_STATS })));
+  };
+
+  // Topology changes rebuild the network (links and offsets depend on it),
+  // so statistics start again from zero.
+  const rebuild = (nodes) => {
+    if (!netRef.current) return;
+    buildNetworks(nodes);
+    setElapsedTime(0);
+    setSummary(EMPTY_SUMMARY);
+    setBaselineSummary(null);
+  };
+
+  // Read and write through the ref so rapid successive edits don't overwrite each other.
+  const commit = (next) => {
+    intersectionsRef.current = next;
+    setIntersections(next);
+  };
+
   const addIntersection = (data) => {
-    const newId = intersections.length > 0 ? Math.max(...intersections.map(i => i.id)) + 1 : 1;
+    const intersections = intersectionsRef.current;
+    const newId = intersections.length > 0 ? Math.max(...intersections.map((i) => i.id)) + 1 : 1;
     const newInt = {
       id: newId,
       name: data?.name || `Intersection ${newId}`,
       status: 'active',
       coordination: 'independent',
-      efficiency: 70 + Math.floor(Math.random() * 15),
       signalState: 'green',
       position: { x: 80 + Math.random() * 400, y: 60 + Math.random() * 200 },
-      mapPos: [24.7112 + (Math.random() - 0.5) * 0.01, 46.6741 + (Math.random() - 0.5) * 0.01],
-      waitTime: 30 + Math.floor(Math.random() * 20),
-      throughput: 120 + Math.floor(Math.random() * 60),
-      queueLength: Math.floor(Math.random() * 10)
+      mapPos: data?.mapPos || [24.7112 + (Math.random() - 0.5) * 0.01, 46.6741 + (Math.random() - 0.5) * 0.01],
+      ...EMPTY_STATS,
     };
-    setIntersections(prev => [...prev, newInt]);
+    const next = [...intersections, newInt].map((i) => ({ ...i, ...(netRef.current ? EMPTY_STATS : {}) }));
+    commit(next);
+    rebuild(next);
   };
 
   const removeIntersection = (id) => {
-    setIntersections(prev => prev.filter(i => i.id !== id));
+    const next = intersectionsRef.current.filter((i) => i.id !== id);
+    commit(next);
+    rebuild(next);
+  };
+
+  const applySettings = (next) => {
+    if (netRef.current) updateNodeSettings(netRef.current, next);
+    if (baseRef.current) updateNodeSettings(baseRef.current, next.map(({ id, status }) => ({ id, status })));
   };
 
   const toggleCoordination = (id) => {
-    setIntersections(prev => prev.map(i =>
+    const next = intersectionsRef.current.map((i) => (
       i.id === id ? { ...i, coordination: i.coordination === 'synchronized' ? 'independent' : 'synchronized' } : i
     ));
+    commit(next);
+    applySettings(next);
   };
 
   const toggleIntersectionStatus = (id) => {
-    setIntersections(prev => prev.map(i =>
+    const next = intersectionsRef.current.map((i) => (
       i.id === id ? { ...i, status: i.status === 'active' ? 'inactive' : 'active' } : i
     ));
+    commit(next);
+    applySettings(next);
   };
 
+  /** Emergency vehicle: pre-empts the nearest active intersection for its approach. */
   const triggerEmergency = () => {
-    const centerMap = intersections[0]?.mapPos || [24.7112, 46.6741];
+    const current = intersectionsRef.current;
+    const active = current.filter((i) => i.status === 'active');
+    const target = active[Math.floor(Math.random() * active.length)] || current[0];
+    const direction = ['North', 'South', 'East', 'West'][Math.floor(Math.random() * 4)];
     const emergency = {
       id: Date.now(),
       type: ['ambulance', 'fire', 'police'][Math.floor(Math.random() * 3)],
-      direction: ['North', 'South', 'East', 'West'][Math.floor(Math.random() * 4)],
+      direction,
       eta: Math.floor(Math.random() * 20) + 10,
-      position: [centerMap[0] + (Math.random() - 0.5) * 0.005, centerMap[1] + (Math.random() - 0.5) * 0.005],
-      timestamp: new Date().toLocaleTimeString()
+      position: target?.mapPos || [24.7112, 46.6741],
+      intersection: target?.name,
+      timestamp: new Date().toLocaleTimeString(),
     };
-    setEmergencyVehicles(prev => [...prev, emergency]);
-    setTimeout(() => {
-      setEmergencyVehicles(prev => prev.filter(e => e.id !== emergency.id));
-    }, emergency.eta * 1000);
+    if (target && netRef.current) {
+      const axis = direction === 'North' || direction === 'South' ? 'ns' : 'ew';
+      preemptIntersection(netRef.current, target.id, axis, Math.min(15, emergency.eta));
+      preemptIntersection(baseRef.current, target.id, axis, Math.min(15, emergency.eta));
+    }
+    setEmergencyVehicles((prev) => [...prev, emergency]);
+    emergencyTimeouts.current.push(setTimeout(() => {
+      setEmergencyVehicles((prev) => prev.filter((e) => e.id !== emergency.id));
+    }, emergency.eta * 1000));
     return emergency;
   };
 
   const clearEmergency = (id) => {
-    setEmergencyVehicles(prev => prev.filter(e => e.id !== id));
+    setEmergencyVehicles((prev) => prev.filter((e) => e.id !== id));
   };
 
   const updateWeather = (w) => {
-    const impacts = { clear: 0, cloudy: 5, rain: 20, 'heavy-rain': 40, snow: 50, fog: 30 };
-    setWeather({ condition: w.condition, impact: impacts[w.condition] || 0 });
+    setWeather({ condition: w.condition, impact: WEATHER_IMPACT[w.condition] || 0 });
+    for (const net of [netRef.current, baseRef.current]) {
+      if (net) setNetworkConditions(net, { weather: w.condition });
+    }
+  };
+
+  const updateTransitPriority = (enabled) => {
+    setTransitPriority(enabled);
+    for (const net of [netRef.current, baseRef.current]) {
+      if (net) setNetworkTransitPriority(net, enabled);
+    }
+  };
+
+  const updateVehicleDistribution = (dist) => {
+    setVehicleDistribution(dist);
+    const heavyVehicleShare = ((dist.truck || 0) + (dist.bus || 0)) / 100;
+    for (const net of [netRef.current, baseRef.current]) {
+      if (net) setNetworkConditions(net, { heavyVehicleShare });
+    }
   };
 
   return {
     isRunning, speed, elapsedTime, intersections, emergencyVehicles, incidents,
     transitPriority, weather, vehicleDistribution, networkMetrics, vehicles,
+    summary, baselineSummary, controlMode,
     play, pause, reset, setSpeed, addIntersection, removeIntersection,
     toggleCoordination, toggleIntersectionStatus, triggerEmergency, clearEmergency,
-    setTransitPriority, updateWeather, setVehicleDistribution
+    setTransitPriority: updateTransitPriority, updateWeather,
+    setVehicleDistribution: updateVehicleDistribution, setControlMode,
   };
 }

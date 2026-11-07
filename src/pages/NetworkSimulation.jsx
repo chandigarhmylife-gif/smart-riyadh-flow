@@ -11,6 +11,8 @@ import LiveMetricsStream from '../components/RealTime/LiveMetricsStream';
 import TrafficMap from '../components/Map/TrafficMap';
 import PublicTransitPriority from '../components/Transit/PublicTransitPriority';
 import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
+import CoordinationImpact from '../components/Network/CoordinationImpact.jsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function NetworkSimulation() {
   const sim = useNetworkSimulation();
@@ -23,6 +25,14 @@ export default function NetworkSimulation() {
       position: i.mapPos,
       status: i.signalState
     }));
+
+  const activeInts = sim.intersections.filter(i => i.status === 'active');
+  const liveMetrics = {
+    waitTime: sim.networkMetrics.waitTime,
+    throughput: sim.networkMetrics.throughput,
+    efficiency: sim.networkMetrics.efficiency,
+    queueLength: activeInts.reduce((s, i) => s + (i.queueLength || 0), 0),
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 sm:p-6">
@@ -37,6 +47,22 @@ export default function NetworkSimulation() {
           onReset={sim.reset}
           onSpeedChange={sim.setSpeed}
         />
+
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="text-slate-600">Signal control:</span>
+          <Select value={sim.controlMode} onValueChange={sim.setControlMode}>
+            <SelectTrigger className="w-64 border-2" aria-label="Network signal control mode">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="coordinated">Fixed-time with green wave</SelectItem>
+              <SelectItem value="adaptive">Adaptive (each signal on its own)</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-slate-500">
+            Toggle 🔗 on an intersection to include it in the green wave. Changing mode restarts the run.
+          </span>
+        </div>
 
         <div className="grid lg:grid-cols-12 gap-4">
           <div className="lg:col-span-8">
@@ -62,13 +88,20 @@ export default function NetworkSimulation() {
                   emergencyVehicles={sim.emergencyVehicles}
                   incidents={sim.incidents}
                   isRunning={sim.isRunning}
+                  jitter={false}
                 />
               </TabsContent>
             </Tabs>
           </div>
 
           <div className="lg:col-span-4 space-y-4">
-            <LiveMetricsStream isActive={sim.isRunning} />
+            <CoordinationImpact
+              controlMode={sim.controlMode}
+              summary={sim.summary}
+              baseline={sim.baselineSummary}
+              elapsedTime={sim.elapsedTime}
+            />
+            <LiveMetricsStream isActive={sim.isRunning} metrics={liveMetrics} />
             <PublicTransitPriority
               isRunning={sim.isRunning}
               onPriorityChange={(enabled) => sim.setTransitPriority(enabled)}
@@ -87,7 +120,7 @@ export default function NetworkSimulation() {
             avgWaitTime: sim.networkMetrics.waitTime,
             throughput: sim.networkMetrics.throughput,
             efficiency: sim.networkMetrics.efficiency,
-            queueLength: Math.round(sim.networkMetrics.throughput / 100)
+            queueLength: liveMetrics.queueLength
           }}
         />
 

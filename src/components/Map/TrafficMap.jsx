@@ -49,7 +49,7 @@ function VehicleMarkers({ vehicles, isRunning }) {
           <br />
           Direction: {vehicle.direction}
           <br />
-          Speed: {vehicle.speed} mph
+          Speed: {vehicle.speed} km/h
         </div>
       </Popup>
     </Marker>
@@ -72,12 +72,13 @@ export default function TrafficMap({
   emergencyVehicles = [],
   incidents = [],
   isRunning = false,
-  center = [24.7112, 46.6741]
+  center = [24.7112, 46.6741],
+  jitter = true, // small random drift for decorative vehicles; off when positions come from a model
 }) {
   const [localVehicles, setLocalVehicles] = useState(vehicles);
 
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning || !jitter) {
       setLocalVehicles(vehicles);
       return;
     }
@@ -95,7 +96,7 @@ export default function TrafficMap({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, vehicles]);
+  }, [isRunning, vehicles, jitter]);
 
   const defaultIntersections = intersections.length > 0 ? intersections : [
     { id: 1, name: 'King Fahd / Al Urubah', position: [24.7112, 46.6741], status: 'green' },
@@ -103,7 +104,7 @@ export default function TrafficMap({
     { id: 3, name: 'King Fahd / Tahlia', position: [24.6993, 46.6806], status: 'green' }
   ];
 
-  const defaultVehicles = localVehicles.length > 0 ? localVehicles : [
+  const defaultVehicles = localVehicles.length > 0 || !jitter ? localVehicles : [
     { id: 1, position: [24.7118, 46.6755], direction: 'North', speed: 25, type: 'car' },
     { id: 2, position: [24.7050, 46.6773], direction: 'South', speed: 30, type: 'car' },
     { id: 3, position: [24.7000, 46.6830], direction: 'East', speed: 28, type: 'car' }
