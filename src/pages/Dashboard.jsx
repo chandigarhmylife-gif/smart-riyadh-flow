@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { referenceMetrics } from '@/lib/referenceRun';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Users, Zap, Clock } from 'lucide-react';
@@ -22,14 +23,27 @@ export default function Dashboard() {
   });
 
   const completedScenarios = scenarios.filter(s => s.status === 'completed' && s.results);
-  const currentMetrics = completedScenarios.length > 0
-    ? {
-        avgWaitTime: Math.round(completedScenarios.reduce((s, c) => s + (c.results?.avgWaitTime || 42), 0) / completedScenarios.length),
-        throughput: Math.round(completedScenarios.reduce((s, c) => s + (c.results?.throughput || 156), 0) / completedScenarios.length),
-        efficiency: Math.round(completedScenarios.reduce((s, c) => s + (c.results?.efficiency || 89), 0) / completedScenarios.length),
-        queueLength: Math.round(completedScenarios.reduce((s, c) => s + (c.results?.queueLength || 8), 0) / completedScenarios.length),
-      }
-    : { avgWaitTime: 42, throughput: 156, efficiency: 89, queueLength: 8 };
+
+  // Average only the values that saved results actually contain.
+  const avgOf = (key) => {
+    const vals = completedScenarios.map(c => c.results?.[key]).filter(v => Number.isFinite(v));
+    return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+  };
+  const saved = {
+    avgWaitTime: avgOf('avgWaitTime'),
+    throughput: avgOf('throughput'),
+    efficiency: avgOf('efficiency'),
+    queueLength: avgOf('queueLength'),
+  };
+  const hasSaved = Object.values(saved).some(v => v !== null);
+
+  // Before any results are saved, show a real 1-hour rush-hour simulation
+  // (adaptive control, fixed seed) instead of made-up numbers.
+  const reference = useMemo(() => referenceMetrics({ controlMode: 'adaptive', seconds: 3600, seed: 1 }), []);
+  const currentMetrics = hasSaved
+    ? Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, v ?? reference[k]]))
+    : reference;
+  const metricsSource = hasSaved ? `${completedScenarios.length} completed` : 'reference sim';
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -76,7 +90,7 @@ export default function Dashboard() {
             value={`${currentMetrics.efficiency}%`}
             icon={Zap}
             trend="up"
-            trendValue={`${completedScenarios.length} completed`}
+            trendValue={metricsSource}
             colorClass="from-green-500 to-green-700"
             loading={loading}
           />
@@ -94,7 +108,7 @@ export default function Dashboard() {
             value={`${currentMetrics.avgWaitTime}s`}
             icon={Clock}
             trend="down"
-            trendValue={`throughput ${currentMetrics.throughput}`}
+            trendValue={`${metricsSource} · ${currentMetrics.throughput} veh/h`}
             colorClass="from-orange-500 to-orange-700"
             loading={loading}
           />
