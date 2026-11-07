@@ -11,7 +11,11 @@ The project is early-stage and under active development. See the [roadmap](#road
 - **Queue-based traffic model.** Vehicles arrive on each approach (Poisson process), queue at red, and discharge at saturation flow on green, including start-up lost time. Wait time, throughput, queue length and efficiency are all computed from these queues. Demand scales with time of day and weather.
 - **Adaptive signal control.** A queue-actuated controller extends or ends each green based on the vehicles actually waiting, within minimum and maximum green limits. It runs side by side with a fixed-time baseline on identical arrivals, so the wait-time reduction and CO₂ saved are measured rather than assumed.
 - **3D intersection simulator.** A real-time three.js view of a four-approach intersection with live signal phases, queued vehicles, and per-approach countdowns.
-- **Network simulation.** Coordinate several intersections along the King Fahd Rd / Olaya St corridor. Toggle synchronisation, take signals offline, and see how weather, transit priority and emergencies affect network KPIs.
+- **Corridor network simulation.** Four linked intersections on King Fahd Rd and Olaya St (at Al Urubah and Tahlia). Vehicles leaving one signal drive to the next at road speed and join its queue, and moving vehicles are shown on the live map.
+- **Green-wave coordination.** Synchronized signals are offset by the travel time between them, so southbound and eastbound platoons arrive on green. A "Coordination Impact" panel compares the run with uncoordinated signals on identical traffic: delay, share of vehicles stopping, and platoon stops by direction.
+- **Network controls with real effects.** Weather slows traffic and reduces capacity. Bus priority gives the King Fahd / Olaya bus corridors a longer green. The vehicle mix applies the HCM heavy-vehicle factor. Emergency vehicles pre-empt the signal at an intersection, and a switched-off signal becomes an uncontrolled junction.
+- **Run timeline and CSV export.** Charts wait time and queues over the run, alongside the fixed-time baseline in adaptive mode. Every 10 s sample can be exported as CSV with the run settings.
+- **Repeatable runs.** Every run has a seed. Enter it again to replay exactly the same traffic, for example to compare control strategies fairly.
 - **Live map.** Intersections, vehicles and incidents plotted on OpenStreetMap around Al Urubah, Tahlia and Al Faisaliah.
 - **Emergency and transit priority.** One-click green corridors for emergency vehicles, plus a bus-priority mode with impact analysis.
 - **Scenario builder.** Place intersections on a canvas, define origin–destination flows and the vehicle mix, configure run settings, then save and reload scenarios.
@@ -24,8 +28,9 @@ The project is early-stage and under active development. See the [roadmap](#road
 
 These are listed openly so contributors know where help is most useful:
 
-- The traffic model covers a **single intersection** with one through lane per approach. It doesn't yet model turning movements, pedestrians or spillback between intersections, and its parameters use textbook defaults rather than values calibrated to Riyadh counts.
-- The multi-intersection network view still uses simplified, randomised KPIs.
+- The models don't yet include turning movements, pedestrians, or queue spillback blocking an upstream intersection. Parameters use textbook defaults rather than values calibrated to Riyadh counts.
+- The green wave favours southbound and eastbound traffic; northbound and westbound get whatever progression the same offsets give them.
+- Some panels (live alerts, the bus feed in Transit Priority, the Dashboard's demo metrics) are still illustrative.
 - Intersection coordinates are **approximate** and the network is a small demo corridor, not the full Riyadh road graph.
 - The operations screens (incidents, devices, models, users) use sample data and are not yet persisted.
 
@@ -39,6 +44,22 @@ These are listed openly so contributors know where help is most useful:
 | Fixed-time plan | 30 s N-S, 4 s yellow, 25 s E-W, 4 s yellow | 63 s cycle |
 | Adaptive limits | 10 s min green, 50 s max green | Gaps out once the served queue is ≤ 1 vehicle and traffic is waiting on the cross street |
 | Idling CO₂ | 0.64 g/s per vehicle | Used for CO₂ saved versus the fixed-time baseline |
+| Heavy vehicles | PCE 2.0 | HCM factor f_HV = 1 / (1 + P_HV) reduces discharge rate |
+
+**Stops** counts a vehicle as stopped if it reaches a non-green signal or joins an existing queue.
+
+### Corridor network
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Lanes per approach | 2 | King Fahd Rd and Olaya St are multi-lane arterials |
+| Link speed | 50 km/h | Slower in bad weather. About 37 s between Al Urubah and Tahlia legs, 106 s along King Fahd and Olaya |
+| Through movement | 80% | Share of vehicles leaving a signal that continue straight to the next one |
+| Side-street demand | 15% | Extra demand on approaches fed by an upstream signal |
+| Bus priority plan | 35 s N-S / 20 s E-W | Versus 30 s / 25 s normally |
+| Linking rule | Nearest neighbour within 35° of a compass axis, up to 2.5 km | |
+
+Across six 15-minute runs, the green wave cut platoon stops from about **60% to 38%** (southbound from 100% to about 30%) and average delay by about 10–20%, compared with uncoordinated fixed-time signals. Isolated adaptive control gave the lowest average delay but stopped most platoons, a known trade-off between local actuation and corridor coordination. As before, these are results *within this model*.
 
 **Efficiency** is the share of green time given to approaches that have vehicles waiting, i.e. green that isn't wasted on an empty road. **Average wait** is total queueing delay divided by vehicles arrived.
 
@@ -98,6 +119,8 @@ src/
     useNetworkSimulation.js  Multi-intersection simulation loop
   lib/
     trafficModel.js    Queue-based traffic model and KPIs (pure, tested)
+    networkModel.js    Linked-intersection corridor model and green waves (pure, tested)
+    csv.js             CSV export helper (tested)
     signalTiming.js    Fixed-time and adaptive signal controllers (pure, tested)
     networkMetrics.js  Network KPI aggregation (pure, tested)
     trafficData.js     CSV/JSON parsing and validation (pure, tested)
@@ -109,7 +132,9 @@ base44/entities/    Data model (TrafficScenario)
 - [x] Queue-based traffic model for the intersection simulator
 - [x] Adaptive (queue-actuated) signal control benchmarked against the fixed-time plan
 - [ ] Turning movements, multiple lanes and pedestrian phases
-- [ ] Extend the queue model to the multi-intersection network, with green-wave coordination
+- [x] Extend the queue model to the multi-intersection network, with green-wave coordination
+- [ ] Coordinated adaptive control (adaptive signals that respect upstream platoons)
+- [ ] Queue spillback between closely spaced intersections
 - [ ] Calibrate demand and saturation flow against real Riyadh counts
 - [ ] Import the real Riyadh road network from OpenStreetMap
 - [ ] Persist incidents, devices and alerts
