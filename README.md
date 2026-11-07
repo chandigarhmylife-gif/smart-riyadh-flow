@@ -17,6 +17,9 @@ The project is early-stage and under active development. See the [roadmap](#road
 - **Incidents and queue spillback.** Place a minor or major incident at an intersection to cut its capacity. When a queue fills the road back to the previous signal, it spills back and blocks that signal's traffic, as in real gridlock. Roads on the map are coloured green, orange or red by how full they are.
 - **Real alerts.** The Live Alerts panels report actual events: queues building and clearing (with hysteresis so alerts don't flicker), spillback, incidents and emergency pre-emption, stamped with simulation time.
 - **Pedestrian crossings.** Push-button pedestrian demand (none, low or high). A call makes the next adaptive green for that crossing last at least 24 s (7 s walk + 20 m at 1.2 m/s).
+- **Signal Timing Advisor.** Computes the optimum fixed-time plan with Webster's method, predicts delay with Webster's delay formula, and grades plans and the live run with HCM Level of Service (A–F). An "Optimized fixed-time (Webster)" mode runs the recommended plan. Pedestrian minimum greens are respected.
+- **Strategy Lab.** One click runs every control strategy on the current corridor many times (in a background Web Worker), with identical traffic for each strategy in a run. Reports means with 95% confidence intervals, a paired comparison against uncoordinated signals with a significance check, a chart, and CSV export.
+- **Level of Service everywhere.** LOS grades appear on the Signal Timing Advisor and on each intersection in the network view.
 - **Network controls with real effects.** Weather slows traffic and reduces capacity. Bus priority gives the King Fahd / Olaya bus corridors a longer green. The vehicle mix applies the HCM heavy-vehicle factor. Emergency vehicles pre-empt the signal at an intersection, and a switched-off signal becomes an uncontrolled junction.
 - **Run timeline and CSV export.** Charts wait time and queues over the run, alongside the fixed-time baseline in adaptive mode. Every 10 s sample can be exported as CSV with the run settings.
 - **Repeatable runs.** Every run has a seed. Enter it again to replay exactly the same traffic, for example to compare control strategies fairly.
@@ -34,7 +37,8 @@ These are listed openly so contributors know where help is most useful:
 
 - The models don't yet include separate turning lanes or pedestrian delay. Spillback blocks a whole approach rather than only its through movement. Parameters use textbook defaults rather than values calibrated to Riyadh counts.
 - The green wave favours southbound and eastbound traffic; northbound and westbound get whatever progression the same offsets give them.
-- Some panels (the bus feed in Transit Priority, the Dashboard's demo metrics and alerts) are still illustrative and labelled as demo feeds.
+- Some panels (the bus feed in Transit Priority, the Dashboard's live-stream tile) are still illustrative and labelled as demo feeds. Dashboard KPI cards use saved results, or a real 1-hour reference simulation until results exist.
+- LOS is graded from queueing delay, which is close to but slightly less than HCM control delay (which also counts deceleration and acceleration).
 - Intersection coordinates are **approximate** and the network is a small demo corridor, not the full Riyadh road graph.
 - The operations screens (incidents, devices, models, users) use sample data and are not yet persisted.
 
@@ -49,6 +53,18 @@ These are listed openly so contributors know where help is most useful:
 | Adaptive limits | 10 s min green, 50 s max green | Gaps out once the served queue is ≤ 1 vehicle and traffic is waiting on the cross street |
 | Idling CO₂ | 0.64 g/s per vehicle | Used for CO₂ saved versus the fixed-time baseline |
 | Heavy vehicles | PCE 2.0 | HCM factor f_HV = 1 / (1 + P_HV) reduces discharge rate |
+
+### Model validation
+
+The single-intersection model is checked against **Webster's delay formula**, the classic analytical result for fixed-time signals. Across demand levels from v/c ≈ 0.25 to 0.8, simulated average delay is within about 10% of Webster's prediction (slightly lower, as expected, since Webster's formula is known to overestimate slightly). This is enforced by automated tests at three demand levels (within 15%).
+
+| Demand (veh/h/approach) | Webster (30/25 plan) | Simulated |
+|---|---|---|
+| 225 | 12.3 s | 11.6 s |
+| 405 | 14.8 s | 13.4 s |
+| 540 | 17.9 s | 16.8 s |
+
+Simulated values are means of ten 2-hour runs. Webster's optimum plan reduced delay by roughly 12–30% versus the standard 30/25 plan at these demands (largest at low demand), in both the formula and the simulation.
 
 **Stops** counts a vehicle as stopped if it reaches a non-green signal or joins an existing queue.
 
@@ -129,6 +145,11 @@ src/
     networkModel.js    Linked-intersection corridor model and green waves (pure, tested)
     csv.js             CSV export helper (tested)
     alerts.js          Alert rules and messages (tested)
+    timingAdvisor.js   Webster timing, Webster delay, HCM LOS (tested)
+    experiments.js     Strategy Lab: batch runs and 95% CIs (tested)
+    referenceRun.js    Headless single-intersection runs (tested)
+  workers/
+    strategyLab.worker.js  Runs Strategy Lab experiments off the main thread
     signalTiming.js    Fixed-time and adaptive signal controllers (pure, tested)
     networkMetrics.js  Network KPI aggregation (pure, tested)
     trafficData.js     CSV/JSON parsing and validation (pure, tested)
@@ -144,6 +165,8 @@ base44/entities/    Data model (TrafficScenario)
 - [x] Coordinated adaptive control (adaptive signals that respect upstream platoons)
 - [x] Queue spillback between closely spaced intersections
 - [x] Incidents and pedestrian push-button calls
+- [x] Webster timing advisor, HCM Level of Service and model validation
+- [x] Strategy Lab with confidence intervals
 - [ ] Separate turning lanes and protected turn phases
 - [ ] Calibrate demand and saturation flow against real Riyadh counts
 - [ ] Import the real Riyadh road network from OpenStreetMap
