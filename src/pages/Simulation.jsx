@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +26,9 @@ import TransitImpactAnalysis from '../components/Transit/TransitImpactAnalysis';
 import EmergencyPriority from '../components/Simulation/EmergencyPriority';
 import VehicleTypes from '../components/Simulation/VehicleTypes';
 import SimulationTimeline from '../components/Simulation/SimulationTimeline';
+import TimingAdvisor from '../components/Simulation/TimingAdvisor';
+import { adviseTiming, MIN_GREEN_S } from '@/lib/timingAdvisor';
+import { PEDESTRIAN_MIN_GREEN_S } from '../hooks/useSimulationEngine';
 import { Input } from '@/components/ui/input';
 
 export default function Simulation() {
@@ -145,6 +148,13 @@ export default function Simulation() {
     }
   };
 
+  const advice = useMemo(() => adviseTiming({
+    demand,
+    timeOfDay: scenarioConfig.timeOfDay || 'rush-hour',
+    weather: scenarioConfig.weatherCondition || 'clear',
+    minGreen: pedestrians !== 'none' ? PEDESTRIAN_MIN_GREEN_S : MIN_GREEN_S,
+  }), [demand, scenarioConfig.timeOfDay, scenarioConfig.weatherCondition, pedestrians]);
+
   const handleControlModeChange = (value) => {
     if (isRunning) {
       toast({ title: 'Stop the simulation first', variant: 'destructive' });
@@ -181,7 +191,7 @@ export default function Simulation() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Traffic Simulation</h1>
-            <p className="text-slate-600">Queue-based simulation with {controlMode === 'adaptive' ? 'adaptive (queue-actuated)' : 'fixed-time'} signal control</p>
+            <p className="text-slate-600">Queue-based simulation with {{ adaptive: 'adaptive (queue-actuated)', optimized: 'optimized fixed-time (Webster)' }[controlMode] || 'fixed-time'} signal control</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={controlMode} onValueChange={handleControlModeChange}>
@@ -191,6 +201,7 @@ export default function Simulation() {
               <SelectContent>
                 <SelectItem value="adaptive">Adaptive control</SelectItem>
                 <SelectItem value="fixed">Fixed-time control</SelectItem>
+                <SelectItem value="optimized">Optimized fixed-time (Webster)</SelectItem>
               </SelectContent>
             </Select>
             <Select value={pedestrians} onValueChange={setPedestrians}>
@@ -249,15 +260,15 @@ export default function Simulation() {
           scenarioName={scenarioName}
         />
 
-        {/* Adaptive vs fixed-time comparison */}
-        {controlMode === 'adaptive' && baselineMetrics && elapsedSeconds >= 60 && (
+        {/* Adaptive / optimized vs standard fixed-time comparison */}
+        {controlMode !== 'fixed' && baselineMetrics && elapsedSeconds >= 60 && (
           <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="baseline-comparison">
             <Badge variant="outline">
-              Fixed-time baseline: {Math.round(baselineMetrics.avgWaitTime)}s avg wait, {Math.round(baselineMetrics.queueLength)} queued
+              Standard fixed-time baseline: {Math.round(baselineMetrics.avgWaitTime)}s avg wait, {Math.round(baselineMetrics.queueLength)} queued
             </Badge>
             {waitReduction !== null && (
               <Badge className={waitReduction >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                {waitReduction >= 0 ? '▼' : '▲'} {Math.abs(waitReduction).toFixed(0)}% wait time vs fixed-time
+                {waitReduction >= 0 ? '▼' : '▲'} {Math.abs(waitReduction).toFixed(0)}% wait time vs standard plan
               </Badge>
             )}
             <Badge className="bg-emerald-100 text-emerald-800">{metrics.co2Saved.toFixed(2)} kg CO₂ saved</Badge>
@@ -292,6 +303,14 @@ export default function Simulation() {
               onSpeedChange={setSpeed}
             />
             <SignalIndicator signalStates={signalStates} timings={timings} />
+            <TimingAdvisor
+              advice={advice}
+              liveDelay={metrics.avgWaitTime}
+              isRunning={isRunning}
+              elapsedSeconds={elapsedSeconds}
+              controlMode={controlMode}
+              onUseOptimized={() => handleControlModeChange('optimized')}
+            />
             <EmergencyPriority onEmergencyTrigger={handleEmergencyTrigger} />
           </div>
 

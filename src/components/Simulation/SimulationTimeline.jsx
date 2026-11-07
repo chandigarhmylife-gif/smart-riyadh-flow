@@ -39,7 +39,7 @@ const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0
 export default function SimulationTimeline({ history, controlMode, seed, scenarioName, settings = {} }) {
   const [metric, setMetric] = useState('wait');
   const series = SERIES[metric];
-  const showBaseline = controlMode === 'adaptive' && history.some((p) => p[series.baseline] !== null);
+  const showBaseline = controlMode !== 'fixed' && history.some((p) => p[series.baseline] !== null);
 
   const exportCsv = () => {
     const preamble = [
@@ -105,7 +105,7 @@ export default function SimulationTimeline({ history, controlMode, seed, scenari
               <Line
                 type="monotone"
                 dataKey={series.current}
-                name={controlMode === 'adaptive' ? 'Adaptive' : 'Fixed-time'}
+                name={{ adaptive: 'Adaptive', optimized: 'Optimized (Webster)' }[controlMode] || 'Fixed-time'}
                 stroke="#2563eb"
                 strokeWidth={2}
                 dot={false}
@@ -115,7 +115,7 @@ export default function SimulationTimeline({ history, controlMode, seed, scenari
                 <Line
                   type="monotone"
                   dataKey={series.baseline}
-                  name="Fixed-time baseline"
+                  name="Standard fixed-time"
                   stroke="#94a3b8"
                   strokeWidth={2}
                   strokeDasharray="5 4"

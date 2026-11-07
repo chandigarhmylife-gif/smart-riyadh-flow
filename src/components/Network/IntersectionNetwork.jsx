@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Network, Plus, Trash2, Link2, Unlink, Power, TrendingUp } from 'lucide-react';
+import { LosBadge } from '../Simulation/TimingAdvisor';
+import { levelOfService } from '@/lib/timingAdvisor';
 
 export default function IntersectionNetwork({ 
   intersections, 
@@ -124,6 +126,9 @@ export default function IntersectionNetwork({
                 <span>{int.coordination === 'synchronized' ? '🔗 Synchronized' : '⚪ Independent'}</span>
                 <div className="flex items-center gap-3">
                   <span>⏱ {int.waitTime}s</span>
+                  {isRunning && int.status === 'active' && int.throughput > 0 && (
+                    <LosBadge los={levelOfService(int.waitTime)} className="h-5 w-5 text-[10px]" />
+                  )}
                   <span>🚗 {int.throughput}/h</span>
                   <div className="flex items-center gap-1 text-green-600 font-medium">
                     <TrendingUp className="w-3 h-3" />

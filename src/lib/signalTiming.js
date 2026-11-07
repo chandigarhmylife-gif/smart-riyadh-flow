@@ -23,12 +23,17 @@ export function initialSignalState() {
  * Advance the signal plan by one second.
  * Returns the new { phase, phaseTimer } and whether the phase changed.
  */
-export function tickSignal({ phase, phaseTimer }) {
+export function tickSignal(state) {
+  return tickPlan(state, PHASE_CONFIGS);
+}
+
+/** Same as tickSignal for any 4-phase plan (e.g. from makePlan or Webster's method). */
+export function tickPlan({ phase, phaseTimer }, plan) {
   if (phaseTimer > 1) {
     return { phase, phaseTimer: phaseTimer - 1, changed: false };
   }
-  const nextPhase = (phase + 1) % PHASE_CONFIGS.length;
-  return { phase: nextPhase, phaseTimer: PHASE_CONFIGS[nextPhase].duration, changed: true };
+  const nextPhase = (phase + 1) % plan.length;
+  return { phase: nextPhase, phaseTimer: plan[nextPhase].duration, changed: true };
 }
 
 /** True when the given phase starts a green interval (where a decision is logged). */

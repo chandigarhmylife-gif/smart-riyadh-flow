@@ -6,6 +6,8 @@ import {
   initialAdaptiveState,
   tickSignal,
   tickSignalAdaptive,
+  tickPlan,
+  makePlan,
   signalStatesFor,
   approachTimings,
 } from '@/lib/signalTiming';
@@ -19,6 +21,7 @@ import {
   co2SavedKg,
 } from '@/lib/trafficModel';
 import { updateQueueAlerts, pushAlerts } from '@/lib/alerts';
+import { adviseTiming, MIN_GREEN_S } from '@/lib/timingAdvisor';
 
 const VEHICLE_COLORS = ['#3B82F6', '#EF4444', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899'];
 const MAX_VEHICLES_DRAWN_PER_APPROACH = 8;
@@ -82,15 +85,17 @@ function directionLabel(phase) {
  *
  * config:
  *  - duration (minutes)
- *  - controlMode: 'adaptive' (queue-actuated) | 'fixed' (63 s fixed-time plan)
+ *  - controlMode: 'adaptive' (queue-actuated) | 'fixed' (63 s fixed-time plan) |
+ *    'optimized' (fixed-time plan from Webster's method for the current demand)
  *  - timeOfDay, weatherCondition: scale demand and capacity
  *  - demand: veh/h per approach (number or { north, south, east, west })
  *  - seed: RNG seed for reproducible runs (random when omitted; the seed used is returned)
  *  - pedestrians: 'none' | 'low' | 'high' push-button demand. A call makes the
  *    next adaptive green for that crossing last at least PEDESTRIAN_MIN_GREEN_S.
  *
- * In adaptive mode a fixed-time baseline runs in parallel with identical
- * arrivals, and co2Saved reports the idling CO2 avoided versus that baseline.
+ * In adaptive and optimized modes the standard fixed-time plan runs in parallel
+ * as a baseline with identical arrivals, and co2Saved reports the idling CO2
+ * avoided versus that baseline.
  */
 export default function useSimulationEngine(config = {}) {
   const [isRunning, setIsRunning] = useState(false);
@@ -111,7 +116,7 @@ export default function useSimulationEngine(config = {}) {
   const [seed, setSeed] = useState(null);
 
   const duration = config.duration || 60; // minutes
-  const controlMode = config.controlMode === 'fixed' ? 'fixed' : 'adaptive';
+  const controlMode = ['fixed', 'optimized'].includes(config.controlMode) ? config.controlMode : 'adaptive';
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -130,6 +135,7 @@ export default function useSimulationEngine(config = {}) {
   const pedRngRef = useRef(null);
   const pedCallsRef = useRef({ 0: false, 2: false }); // waiting calls per green phase
   const pedServedRef = useRef(0);
+  const planRef = useRef(PHASE_CONFIGS); // fixed-time plan in use ('fixed' / 'optimized')
   const emergencyTimeoutRef = useRef(null);
 
   const initModels = useCallback(() => {
@@ -144,14 +150,30 @@ export default function useSimulationEngine(config = {}) {
     setSeed(runSeed);
     modelRef.current = createTrafficModel(options);
     rngRef.current = createRng(runSeed);
-    const adaptive = c.controlMode !== 'fixed';
-    baselineRef.current = adaptive ? createTrafficModel(options) : null;
-    baselineRngRef.current = adaptive ? createRng(runSeed) : null;
+    const mode = c.controlMode || 'adaptive';
+    const adaptive = mode === 'adaptive';
+    const withBaseline = mode !== 'fixed';
+    baselineRef.current = withBaseline ? createTrafficModel(options) : null;
+    baselineRngRef.current = withBaseline ? createRng(runSeed) : null;
+    if (mode === 'optimized') {
+      const advice = adviseTiming({
+        demand: c.demand,
+        timeOfDay: options.timeOfDay,
+        weather: options.weather,
+        lanes: options.lanes,
+        minGreen: c.pedestrians && c.pedestrians !== 'none' ? PEDESTRIAN_MIN_GREEN_S : MIN_GREEN_S,
+      });
+      planRef.current = makePlan({ nsGreen: advice.optimized.nsGreen, ewGreen: advice.optimized.ewGreen });
+    } else {
+      planRef.current = PHASE_CONFIGS;
+    }
     pedRngRef.current = createRng(runSeed + 7); // separate stream: vehicle arrivals stay identical
     pedCallsRef.current = { 0: false, 2: false };
     pedServedRef.current = 0;
     queueAlertsRef.current = new Set();
-    signalRef.current = adaptive ? initialAdaptiveState() : initialSignalState();
+    signalRef.current = adaptive
+      ? initialAdaptiveState()
+      : { phase: 0, phaseTimer: planRef.current[0].duration };
     baselineSignalRef.current = initialSignalState();
     statesRef.current = signalStatesFor(0);
     setPhaseTimer(signalRef.current.phaseTimer);
@@ -178,7 +200,7 @@ export default function useSimulationEngine(config = {}) {
 
     intervalRef.current = setInterval(() => {
       if (!modelRef.current) initModels();
-      const adaptive = configRef.current.controlMode !== 'fixed';
+      const adaptive = (configRef.current.controlMode || 'adaptive') === 'adaptive';
 
       // 1. Signal controller
       const currentQueues = queueLengths(modelRef.current);
@@ -201,7 +223,7 @@ export default function useSimulationEngine(config = {}) {
 
       const next = adaptive
         ? tickSignalAdaptive(signalRef.current, currentQueues, limits)
-        : tickSignal(signalRef.current);
+        : tickPlan(signalRef.current, planRef.current);
       signalRef.current = {
         phase: next.phase,
         phaseTimer: next.phaseTimer,
@@ -245,7 +267,7 @@ export default function useSimulationEngine(config = {}) {
             `Activated ${label} green phase`,
             adaptive
               ? `${servedQ} vehicle(s) queued ${label}. Green will run ${ADAPTIVE_LIMITS.minGreen}-${ADAPTIVE_LIMITS.maxGreen}s depending on demand.`
-              : `Fixed-time plan: ${PHASE_CONFIGS[next.phase].duration}s green with ${servedQ} vehicle(s) queued.`,
+              : `${configRef.current.controlMode === 'optimized' ? 'Optimized (Webster)' : 'Fixed-time'} plan: ${planRef.current[next.phase].duration}s green with ${servedQ} vehicle(s) queued.`,
             adaptive ? 92 : 100
           );
         }
